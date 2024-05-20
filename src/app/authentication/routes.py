@@ -1,6 +1,6 @@
 from flask import redirect, url_for, render_template
-from src.app import auth, whatsapp
-from src.app.forms import Register, Login
+from src.app.authentication import auth
+from src.app.authentication.forms import Register, Login
 
 @auth.route('/', methods=['GET', 'POST'])
 def root():
@@ -12,6 +12,6 @@ def root():
     #return redirect(url_for('whatsapp.home'))
     return username
   
-  return render_template('auth/login.html', **context)
+  return render_template('login.html', **context)
   
 

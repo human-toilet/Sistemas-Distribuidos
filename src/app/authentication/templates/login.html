@@ -1,0 +1,32 @@
+{%extends 'base.html'%}
+
+{%block styles_link%}
+<link rel="stylesheet" href="{{url_for('static', filename='styles/login.css')}}"/>
+{%endblock%}
+{%block content%}
+  <div class="container_principal">
+    <div class="container_login">
+      <form class="form_login">
+        {{form.hidden_tag()}}
+        <div class="container_fields">
+          <div class="element_form_login">
+            {{form.username.label}} 
+            {{form.username}}
+          </div>
+          <div class="element_form_login">
+            {{form.password.label}} 
+            {{form.password}}
+          </div>
+        </div>
+        <div class="container_button">
+          {{form.submit}}
+        </div>
+      </form>
+      <div class="container_foot_login">
+        <p>No tienes una cuenta, <a href="{{url_for('auth.root')}}">registrate</a></p>
+      </div>
+    </div>
+  </div>
+  
+{%endblock%}
+
