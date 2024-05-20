@@ -1,3 +1,4 @@
+#dependencias
 from flask import redirect, url_for, render_template
 from src.app.authentication import auth
 from src.app.authentication.forms import Register, Login
