@@ -6,7 +6,7 @@
 {%block content%}
   <div class="container_principal">
     <div class="container_login">
-      <form class="form_login">
+      <form class="form_login" method="POST">
         {{form.hidden_tag()}}
         <div class="container_fields">
           <div class="element_form_login">
@@ -23,10 +23,9 @@
         </div>
       </form>
       <div class="container_foot_login">
-        <p>No tienes una cuenta, <a href="{{url_for('auth.root')}}">registrate</a></p>
+        <p>Don't have an account, <a href="{{url_for('auth.register')}}">sign up</a></p>
       </div>
     </div>
   </div>
-  
 {%endblock%}
 

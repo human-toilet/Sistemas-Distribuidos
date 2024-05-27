@@ -11,8 +11,18 @@ def root():
   if form.validate_on_submit():
     username = form.username.data
     #return redirect(url_for('whatsapp.home'))
-    return username
+    return 'sex'
   
   return render_template('login.html', **context)
   
-
+@auth.route('/register', methods=['GET', 'POST'])
+def register():
+  form = Register()
+  context = {'form': form}
+  
+  if form.validate_on_submit():
+    username = form.username.data
+    #return redirect(url_for('whatsapp.home'))
+    return 'sex'
+  
+  return render_template('register.html', **context)

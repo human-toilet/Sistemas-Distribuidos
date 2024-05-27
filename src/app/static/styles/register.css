@@ -15,25 +15,16 @@ body{
   width: 100vw;
 }
 
-.container_login{
+.form_register{
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
   flex-direction: column;
-  height: 55%;
+  height: 60%;
   width: 40%;
   background-color: white;
   border-radius: 25px;
-  border: 1px solid black;
-}
-
-.form_login{
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex-direction: column;
-  height: 70%;
-  width: 80%;
+  border: 1px black solid;
 }
 
 .container_fields{
@@ -42,19 +33,19 @@ body{
   justify-content: flex-start;
   flex-direction: column;
   width: 100%;
-  height: 50%;
+  height: 60%;
 }
 
-.element_form_login{
+.element_form_register{
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   margin: 5px;
-  width: 100%;
+  width: 90%;
 }
 
-.element_form_login label{
+.element_form_register label{
   color: blueviolet;
   font-weight: bold;
   width: 100%;
@@ -65,7 +56,7 @@ body{
   user-select: none;
 }
 
-.element_form_login input{
+.element_form_register input{
   width: 80%;
   background-color: blueviolet;
   padding: 3px 5px;
@@ -96,19 +87,4 @@ body{
 
 .container_button input:hover{
   background-color: peru;
-}
-
-.container_foot_login{
-  user-select: none;
-  font-weight: bold;
-}
-
-a{
-  text-decoration: none; 
-  font-weight: bold;
-  color: blueviolet;
-}
-
-a:hover{
-  color: peru;
 }
