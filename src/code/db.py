@@ -1,17 +1,22 @@
-import os
+#dependencias
 from utils import set_id
+import os
 
+DIR = os.path.dirname(os.path.abspath(__file__))
+
+#encontrar un usuario segun su id
 def find_user(id: str) -> str:
   for user in os.listdir('db'):
     if set_id(user) == id:
-      return f'db/{user}'
+      return f'{DIR}/db/{user}'
 
+#objeto para encapsular la db
 class DB:
   @classmethod
   def register(cls, name: str, number: int) -> str:
     #verificar si esta en la db
-    if os.path.exists(f'db/{name} - {number}'):
-      return('User already exists')
+    if os.path.exists(f'{DIR}/db/{name} - {number}'):
+      return False, 'User already exists'
       
     #agregar al nuevo usuario
     os.mkdir(f'db/{name} - {number}')
@@ -19,16 +24,16 @@ class DB:
     with open(f'db/{name} - {number}/contacts.txt', 'w') as f:
       f.write('')
       
-    return 'Succesful registration'
+    return True, 'Succesful registration'
     
   @classmethod
-  def login(cls, name: str, number: int):
+  def login(cls, name: str, number: int) -> str:
     #verificar si esta en la db
-    if os.path.exists(f'db/{name} - {number}'):
-      with open(f'db/{name} - {number}/contacts.txt') as f:
-        return f.read()
+    if os.path.exists(f'{DIR}/db/{name} - {number}'):
+      with open(f'{DIR}/db/{name} - {number}/contacts.txt') as f:
+        return True, f.read()
     
-    return 'User not registred'
+    return False, 'User not registred'
 
   @classmethod
   def add_contact(cls, id: str, name: str, number: int) -> str:
