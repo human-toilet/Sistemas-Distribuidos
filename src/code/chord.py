@@ -1,12 +1,11 @@
 #dependencias
-from src.code.utils import set_id
 from src.code.db import DB
+from src.code.utils import set_id
 import socket
 import threading
 import time
 
 #operaciones chord
-
 
 #operadores database
 REGISTER = 'r'
@@ -15,7 +14,7 @@ ADD_CONTACT = 'ac'
 SEND_MSG = 'sm'
 RECV_MSG = 'rm'
 
-
+#nodos referentes a otros servidores
 class NodeReference:
   def __init__(self, ip: str, port: str):
     self._id = set_id(ip)
@@ -41,6 +40,18 @@ class NodeReference:
     response = self._send_data(LOGIN, f'{id}|{name}|{number}').decode()
     return response
       
+  def add_contact(self, id: str, name: str, number: int):
+    response = self._send_data(ADD_CONTACT, f'{id}|{name}|{number}').decode()
+    return response
+  
+  def send_msg(self, id: str, name: str, number: int, msg: str) -> str:
+    response = self._send_data(SEND_MSG, f'{id}|{name}|{number}|{msg}')
+    return response
+  
+  def recv_msg(self, id: str, name: str, number: int, msg: str) -> str:
+    response = self._send_data(RECV_MSG, f'{id}|{name}|{number}|{msg}')
+    return response
+  
   @property
   def id(self):
     return self._id
@@ -53,8 +64,8 @@ class NodeReference:
   def port(self):
     return self._port
   
-
-class Node:
+#mi servidor  
+class ServerNode:
   def __init__(self, port: str):
     self._ip = socket.gethostbyname(socket.gethostname())
     self._id = set_id(self._ip)
@@ -88,21 +99,51 @@ class Node:
       if self._finger[i] != None and self._finger[id] > id:
         return self._finger[i - 1]
     
-  def _register(self, id: str, name: str, number: int):
-    if id in self._box:
+  def register(self, id: str, name: str, number: int) -> str:
+    if id <= self._id:
       response = DB.register(name, number)
       print(response)
       return response
     
     response = self._closest_preceding_finger(id).register(id, name, number)
+    return response
+  
+  def login(self, id: str, name: str, number: int) -> str:
+    if id <= self._id:
+      response = DB.login(name, number)
+      print(response)
+      return response
+    
+    response = self._closest_preceding_finger(id).login(id, name, number)
     print(response)
     return response
   
-  def _login(self, id: str, name: str, number: int):
-    if id in self._box:
-      return DB.login(name, number)
+  def add_contact(self, id: str, name: str, number: int) -> str:
+    if id <= self._id:
+      response = DB.add_contact(id, name, number)
+      print(response)
+      return response
     
-    response = self._closest_preceding_finger(id).login(id, name, number)
+    response = self._closest_preceding_finger(id).add_contact(id, name, number)
+    return response
+  
+  def send_msg(self, id: str, name: str, number: int, msg: str) -> str:
+    if id <= self._id:
+      response = DB.send_msg(id, name, number, msg)
+      print(response)
+      return response
+    
+    response = self._closest_preceding_finger(id).send_msg(id, name, number)
+    print(response)
+    return response
+  
+  def recv_msg(self, id: str, name: str, number: int, msg: str) -> str:
+    if id <= self._id:
+      response = DB.recv_msg(id, name, number, msg)
+      print(response)
+      return response
+    
+    response = self._closest_preceding_finger(id).recv_msg(id, name, number)
     print(response)
     return response
   
@@ -122,14 +163,37 @@ class Node:
           id = data[1]
           name = data[2]
           number = str(data[3])
-          data_resp = self._register(id, name, number)
+          data_resp = self.register(id, name, number)
           conn.sendall(data_resp)
           
         elif option == LOGIN:
           id = data[1]
           name = data[2]
           number = str(data[3])
-          data_resp = self._register(id, name, number)
+          data_resp = self.register(id, name, number)
+          conn.sendall(data_resp)
+          
+        elif option == ADD_CONTACT:
+          id = data[1]
+          name = data[2]
+          number = str(data[3])
+          data_resp = self.add_contact(id, name, number)
+          conn.sendall(data_resp)
+          
+        elif option == SEND_MSG:
+          id = data[1]
+          name = data[2]
+          number = str(data[3])
+          msg = data[4]
+          data_resp = self.send_msg(id, name, number, msg)
+          conn.sendall(data_resp)
+          
+        elif option == RECV_MSG:
+          id = data[1]
+          name = data[2]
+          number = str(data[3])
+          msg = data[4]
+          data_resp = self.recv_msg(id, name, number, msg)
           conn.sendall(data_resp)
           
         if data_resp:
