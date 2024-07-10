@@ -1,6 +1,6 @@
 #dependencias
 from src.code.db import DB
-from src.code.utils import set_id
+from src.utils import set_id
 import socket
 import threading
 import time
@@ -65,7 +65,7 @@ class NodeReference:
     return self._port
   
 #mi servidor  
-class ServerNode:
+class Server:
   def __init__(self, port: str):
     self._ip = socket.gethostbyname(socket.gethostname())
     self._id = set_id(self._ip)
@@ -77,12 +77,12 @@ class ServerNode:
     self._leader: bool
     
     #hilos
-    threading.Thread(target=self._set_leader).start()
+    #threading.Thread(target=self._set_leader).start()
     threading.Thread(target=self._start_server).start()
     
   def _set_leader(self):
     while(True):
-      self._leader = True if self._succ == None or self._pred.id > self.id else False
+      self._leader = True if self._pred == None or self._succ.id < self.id else False
       time.sleep(10)
   
   def _fix_finger(self, node: NodeReference):
