@@ -1,5 +1,25 @@
-{%extends base.html%}
+{%extends 'base.html'%}
 
 {%block styles_link%}
-<link rel="stylesheet" href="{{url_for('static', filename='styles/login.css')}}"/>
+<link rel="stylesheet" href="{{url_for('static', filename='styles/homepage.css')}}"/>
+{%endblock%}
+{%block content%}
+  <div class="container_principal">
+    <div class='container_head'>
+      <h2>Home-Page</h2>
+    </div>
+    <div class="principal_content_contacts">
+      <div class="container_contacts">
+        <div class="contacts_head">
+          <h3>Contacts</h3>
+        </div>
+        <ul class="container_list">
+          {%for contact in contacts%}
+            <a class="container_li"><li href="{{url_for('auth.add_contact')}}">{{contact}}</li></a>
+          {%endfor%}
+        </ul>
+        <a class='button_contact' href="{{url_for('auth.add_contact')}}"> add contact</a>
+      </div>
+    </div>
+  </div>
 {%endblock%}
