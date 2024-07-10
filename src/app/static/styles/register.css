@@ -18,9 +18,9 @@ body{
 .form_register{
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: center;
   flex-direction: column;
-  height: 60%;
+  height: 50%;
   width: 40%;
   background-color: white;
   border-radius: 25px;
