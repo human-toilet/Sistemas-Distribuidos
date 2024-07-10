@@ -57,7 +57,7 @@ class DB:
     endpoint = f'{name} - {number}'
     
     with open(f'{user}/{endpoint}.txt', 'a') as f:
-      f.write(f'[YOU]: {msg}\n')   
+      f.write(f'[YOU]: {msg}\n' if msg.strip() != '' else '')   
       
     with open(f'{user}/{endpoint}.txt', 'r') as f:
       return f.read() 
