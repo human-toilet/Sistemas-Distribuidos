@@ -1,5 +1,5 @@
 #dependencias
-from utils import set_id
+from src.utils import set_id
 import os
 
 DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +16,7 @@ class DB:
   def register(cls, name: str, number: int) -> str:
     #verificar si esta en la db
     if os.path.exists(f'{DIR}/db/{name} - {number}'):
-      return False, 'User already exists'
+      return 'User already exists'
       
     #agregar al nuevo usuario
     os.mkdir(f'db/{name} - {number}')
@@ -24,16 +24,16 @@ class DB:
     with open(f'db/{name} - {number}/contacts.txt', 'w') as f:
       f.write('')
       
-    return True, 'Succesful registration'
+    return 'Succesful registration'
     
   @classmethod
   def login(cls, name: str, number: int) -> str:
     #verificar si esta en la db
     if os.path.exists(f'{DIR}/db/{name} - {number}'):
       with open(f'{DIR}/db/{name} - {number}/contacts.txt') as f:
-        return True, f.read()
+        return f.read()
     
-    return False, 'User not registred'
+    return 'User not registred'
 
   @classmethod
   def add_contact(cls, id: str, name: str, number: int) -> str:
@@ -43,7 +43,7 @@ class DB:
     #validar si el contacto ya existe
     with open(f'{user}/contacts.txt', 'r') as f:
       if f'{name} - {number}\n' in f.readlines():
-        return('Contact already exists')
+        return 'Contact already exists'
       
     with open(f'{user}/contacts.txt', 'a') as f:
       f.write(f'{name} - {number}\n')
