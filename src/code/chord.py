@@ -66,14 +66,14 @@ class NodeReference:
   
 #mi servidor  
 class Server:
-  def __init__(self, port: str):
+  def __init__(self, port: int):
     self._ip = socket.gethostbyname(socket.gethostname())
     self._id = set_id(self._ip)
     self._port = port
-    self._succ = NodeReference(self._ip, self._port)
+    self._ref = NodeReference(self._ip, self._port)
+    self._succ = self._ref
     self._pred = None
-    self._finger = [self._succ] * 160
-    self._box = set()
+    self._finger = [self._ref] * 160
     self._leader: bool
     
     #hilos
