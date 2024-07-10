@@ -17,14 +17,14 @@ body{
   user-select: none;
 }
 
-.principal_content_contacts{
+.principal_content_chats{
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
   height: 75%;
 }
 
-.container_contacts{
+.container_chats{
   height: 100%;
   background-color: white;
   width: 70%;
@@ -36,7 +36,7 @@ body{
   border-radius: 25px;
 }
 
-.contacts_head{
+.chats_head{
   display: flex;
   align-items: center;
   justify-content: center;
@@ -50,48 +50,50 @@ body{
   user-select: none;
 }
 
-.container_list{
+.chats{
   background-color: blueviolet;
   width: 85%;
   height: 100%;
   border: 1px solid black;
   border-radius: 25px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
 }
 
-.container_link{
-  user-select: none;
-  text-decoration: none;
+.msg{
   color: white;
   font-weight: bold;
-  cursor: pointer;
+}
+
+.send_msg{
+  display: flex;
+  margin: 15px 0;
+  width: 85%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#text{
+  width: 90%;
   padding: 5px;
-  margin: 1px 0;
-}
-
-.container_link:hover{
-  color: peru;
-}
-
-.button_contact{
   background-color: blueviolet;
   color: white;
-  text-decoration: none;
   font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 10px;
-  width: 20%;
-  height: 10%;
-  border-radius: 25px;
   border: 1px solid black;
+  border-radius: 25px;
+  user-select: none;
+}
+
+#submit{
+  background-color: blueviolet;
+  color: white;
+  font-weight: bold;
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 5px 8px;
+  margin: 0 3px;
   cursor: pointer;
 }
 
-.button_contact:hover{
-  background-color: black;
+#submit:hover{
   color: peru;
+  background-color: black;
 }
