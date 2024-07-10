@@ -13,11 +13,11 @@
         <div class="contacts_head">
           <h3>Contacts</h3>
         </div>
-        <ul class="container_list">
+        <nav class="container_list">
           {%for contact in contacts%}
-            <a class="container_li"><li href="{{url_for('auth.add_contact')}}">{{contact}}</li></a>
+            <a class="container_link" href="{{url_for('auth.chat', name=contact.split('-')[0].strip(), number=contact.split('-')[1].strip())}}">{{contact}}</a>
           {%endfor%}
-        </ul>
+        </nav>
         <a class='button_contact' href="{{url_for('auth.add_contact')}}"> add contact</a>
       </div>
     </div>
