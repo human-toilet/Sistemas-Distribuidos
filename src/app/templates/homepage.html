@@ -5,6 +5,7 @@
 {%endblock%}
 {%block content%}
   <div class="container_principal">
+    <a class="back_button" href="{{url_for('auth.login')}}">back</a>
     <div class='container_head'>
       <h2>Home-Page</h2>
     </div>
@@ -15,10 +16,10 @@
         </div>
         <nav class="container_list">
           {%for contact in contacts%}
-            <a class="container_link" href="{{url_for('auth.chat', name=contact.split('-')[0].strip(), number=contact.split('-')[1].strip())}}">{{contact}}</a>
+            <a class="container_link" href="{{url_for('auth.chat', name=contact.split('-')[0].strip(), number=contact.split('-')[1].strip(), id=id, my_name=my_name, my_number=my_number, data=no_parse_contacts)}}">{{contact}}</a>
           {%endfor%}
         </nav>
-        <a class='button_contact' href="{{url_for('auth.add_contact')}}"> add contact</a>
+        <a class='button_contact' href="{{url_for('auth.add_contact', id=id, my_name=my_name, my_number=my_number, data=no_parse_contacts)}}"> add contact</a>
       </div>
     </div>
   </div>

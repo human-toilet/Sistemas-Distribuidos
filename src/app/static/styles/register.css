@@ -88,3 +88,23 @@ body{
 .container_button input:hover{
   background-color: peru;
 }
+
+.back_button
+{
+  position: absolute;
+  color: blueviolet;
+  margin: 5px 10px;
+  padding: 5px;
+  font-weight: bold;
+  font-size: 20px;
+  border: 1px solid black;
+  border-radius: 15px;
+  cursor: pointer;
+  user-select: none;
+  background-color: white;
+}
+
+.back_button:hover{
+  background-color: black;
+  color: peru;
+}

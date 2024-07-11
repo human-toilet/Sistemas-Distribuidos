@@ -4,10 +4,6 @@ from src.app.auth import auth, server
 from src.app.auth.forms import *
 from src.utils import set_id
 
-ID: str #id del usuario en el anillo
-NAME: str #mi nombre de usuario
-NUMBER: int #mi numero de telefono
-
 @auth.route('/', methods=['GET', 'POST'])
 def login():
   form = Login()
@@ -22,10 +18,8 @@ def login():
       flash(response)
       return render_template('login.html', **context)
     
-    ID = set_id(f'{username} - {number}')
-    NAME = username
-    NUMBER = number
-    return redirect(url_for('auth.homepage', data=response))
+    return redirect(url_for('auth.homepage', data=response, id=set_id(f'{username} - {number}'),
+                            my_name=username, my_number=number))
   
   return render_template('login.html', **context)
   
@@ -43,34 +37,52 @@ def register():
       flash(response)
       return render_template('register.html', **context)
     
-    ID = set_id(f'{username} - {number}')
-    NAME = username
-    NUMBER = number
-    return redirect(url_for('auth.homepage', data=''))
+    return redirect(url_for('auth.homepage', data='', id=set_id(f'{username} - {number}'),
+                            my_name=username, my_number=number))
   
   return render_template('register.html', **context)
 
 @auth.route('/homepage')
 def homepage():
-  #data = request.args.get('data')
-  context = {'contacts': ['Maxi - 55555555555', 'May - 55555555555']} 
+  id = request.args.get('id')
+  my_name = request.args.get('my_name')
+  my_number = request.args.get('my_number')
+  data = request.args.get('data')
+  parse_data = data.split('\n')
+  context = {
+    'contacts': parse_data if not '' in parse_data else [],
+    'no_parse_contacts': data,
+    'id': id,
+    'my_name': my_name,
+    'my_number': my_number} 
   return render_template('homepage.html', **context)
 
 @auth.route('/add_contact', methods=['GET', 'POST'])
 def add_contact():
+  id = request.args.get('id')
+  my_name = request.args.get('my_name')
+  my_number = request.args.get('my_number')
+  data = request.args.get('data')
   form = AddContact()
-  context = {'form': form}
+  context = {
+    'form': form,
+    'id': id,
+    'my_name': my_name, 
+    'my_number': my_number,
+    'data': data
+    }
   
   if form.validate_on_submit():
     username = form.name.data
     number = form.number.data
-    response = server.add_contact(ID, username, number)
+    server.register(set_id(f'{username} - {number}'), username, number)
+    response = server.add_contact(id, username, number)
   
     if response == 'Contact already exists':
       flash(response)
       return render_template('add_contact.html', **context)
     
-    return redirect(url_for('auth.homepage', data=response))
+    return redirect(url_for('auth.homepage', data=response, id=id, my_name=my_name, my_number=my_number))
   
   return render_template('add_contact.html', **context)
 
@@ -78,18 +90,26 @@ def add_contact():
 def chat():
   name = request.args.get('name')
   number = request.args.get('number')
-  chat_state = server.send_msg(ID, name, number, '')
+  id = request.args.get('id')
+  my_name = request.args.get('my_name')
+  my_number = request.args.get('my_number')
+  data = request.args.get('data')
+  chat_state = server.send_msg(id, name, number, '')
   form = SendMSG()
-  context = {
-    'form': form,
-    'name': name,
-    'state': chat_state.split('\n')
-  }
   
   if form.validate_on_submit():
     msg = form.text.data
-    chat_state = server.send_msg(ID, name, number, msg)
-    server.recv_msg(set_id(f'{name} - {number}'), NAME, NUMBER)
+    chat_state = server.send_msg(id, name, number, msg)
+    server.recv_msg(set_id(f'{name} - {number}'), my_name, my_number, msg)
+    
+  context = {
+    'form': form,
+    'name': name,
+    'state': chat_state.split('\n'),
+    'my_name': my_name, 
+    'my_number': my_number,
+    'data': data
+    }
     
   return render_template('chat.html', **context)
   

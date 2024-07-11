@@ -77,13 +77,13 @@ class Server:
     self._leader: bool
     
     #hilos
-    #threading.Thread(target=self._set_leader).start()
+    threading.Thread(target=self._set_leader).start()
     threading.Thread(target=self._start_server).start()
     
   def _set_leader(self):
     while(True):
       self._leader = True if self._pred == None or self._succ.id < self.id else False
-      time.sleep(10)
+      time.sleep(5)
   
   def _fix_finger(self, node: NodeReference):
     for i in range(160):
@@ -100,7 +100,7 @@ class Server:
         return self._finger[i - 1]
     
   def register(self, id: str, name: str, number: int) -> str:
-    if id <= self._id:
+    if self._leader or id <= self._id:
       response = DB.register(name, number)
       print(response)
       return response
@@ -109,7 +109,7 @@ class Server:
     return response
   
   def login(self, id: str, name: str, number: int) -> str:
-    if id <= self._id:
+    if self._leader or id <= self._id:
       response = DB.login(name, number)
       print(response)
       return response
@@ -119,7 +119,7 @@ class Server:
     return response
   
   def add_contact(self, id: str, name: str, number: int) -> str:
-    if id <= self._id:
+    if self._leader or id <= self._id:
       response = DB.add_contact(id, name, number)
       print(response)
       return response
@@ -128,7 +128,7 @@ class Server:
     return response
   
   def send_msg(self, id: str, name: str, number: int, msg: str) -> str:
-    if id <= self._id:
+    if self._leader or id <= self._id:
       response = DB.send_msg(id, name, number, msg)
       print(response)
       return response
@@ -138,7 +138,7 @@ class Server:
     return response
   
   def recv_msg(self, id: str, name: str, number: int, msg: str) -> str:
-    if id <= self._id:
+    if self._leader or id <= self._id:
       response = DB.recv_msg(id, name, number, msg)
       print(response)
       return response

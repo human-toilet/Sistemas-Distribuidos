@@ -6,7 +6,7 @@ DIR = os.path.dirname(os.path.abspath(__file__))
 
 #encontrar un usuario segun su id
 def find_user(id: str) -> str:
-  for user in os.listdir('db'):
+  for user in os.listdir(f'{DIR}/db'):
     if set_id(user) == id:
       return f'{DIR}/db/{user}'
 
@@ -19,9 +19,9 @@ class DB:
       return 'User already exists'
       
     #agregar al nuevo usuario
-    os.mkdir(f'db/{name} - {number}')
+    os.mkdir(f'{DIR}/db/{name} - {number}')
     
-    with open(f'db/{name} - {number}/contacts.txt', 'w') as f:
+    with open(f'{DIR}/db/{name} - {number}/contacts.txt', 'w') as f:
       f.write('')
       
     return 'Succesful registration'
@@ -30,8 +30,8 @@ class DB:
   def login(cls, name: str, number: int) -> str:
     #verificar si esta en la db
     if os.path.exists(f'{DIR}/db/{name} - {number}'):
-      with open(f'{DIR}/db/{name} - {number}/contacts.txt') as f:
-        return f.read()
+      with open(f'{DIR}/db/{name} - {number}/contacts.txt', 'r') as f:
+        return f.read().strip()
     
     return 'User not registred'
 
@@ -49,7 +49,7 @@ class DB:
       f.write(f'{name} - {number}\n')
     
     with open(f'{user}/contacts.txt', 'r') as f:
-      return(f.read())
+      return f.read().strip()
       
   @classmethod
   def send_msg(cls, id: str, name: str, number: int, msg: str) -> str:
@@ -60,10 +60,10 @@ class DB:
       f.write(f'[YOU]: {msg}\n' if msg.strip() != '' else '')   
       
     with open(f'{user}/{endpoint}.txt', 'r') as f:
-      return f.read() 
+      return f.read().strip() 
   
   @classmethod
-  def recv_msg(cls, id: str, name: str, number: int, msg: str) -> str:
+  def recv_msg(cls, id: str, name: str, number: str, msg: str) -> str:
     #agregar el contacto si no esta
     cls.add_contact(id, name, number)
     user = find_user(id)
@@ -74,6 +74,7 @@ class DB:
       
     with open(f'{user}/{endpoint}.txt', 'r') as f:
       return f.read() 
+
   
       
 
