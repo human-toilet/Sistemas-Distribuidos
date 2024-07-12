@@ -19,7 +19,7 @@
             <a class="container_link" href="{{url_for('auth.chat', name=contact.split('-')[0].strip(), number=contact.split('-')[1].strip(), id=id, my_name=my_name, my_number=my_number, data=no_parse_contacts)}}">{{contact}}</a>
           {%endfor%}
         </nav>
-        <a class='button_contact' href="{{url_for('auth.add_contact', id=id, my_name=my_name, my_number=my_number, data=no_parse_contacts)}}"> add contact</a>
+        <a class='button_contact' href="{{url_for('auth.add_contact', id=id, my_name=my_name, my_number=my_number, data=no_parse_contacts)}}">add contact</a>
       </div>
     </div>
   </div>
