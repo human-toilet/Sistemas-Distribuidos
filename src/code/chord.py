@@ -3,7 +3,9 @@ from src.code.db import DB
 from src.code.comunication import NodeReference, BroadcastRef 
 from src.code.comunication import REGISTER, LOGIN, ADD_CONTACT, SEND_MSG, RECV_MSG
 from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER, FIND_FIRST
+from src.code.db import DIR
 from src.utils import set_id, get_ip
+import os
 import socket
 import threading
 import time
@@ -33,6 +35,7 @@ class Server:
     threading.Thread(target=self._set_first).start()
     
     #ejecutar al unirme a la red
+    os.mkdir(f'{DIR}/db')
     self._broadcast.join() 
     self._broadcast.fix_finger()
   
