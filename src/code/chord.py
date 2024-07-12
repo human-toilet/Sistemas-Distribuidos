@@ -4,8 +4,7 @@ from src.code.comunication import NodeReference, BroadcastRef
 from src.code.comunication import REGISTER, LOGIN, ADD_CONTACT, SEND_MSG, RECV_MSG
 from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER, FIND_FIRST
 from src.code.db import DIR
-from src.utils import set_id, get_ip
-import os
+from src.utils import set_id, get_ip, create_folder
 import socket
 import threading
 import time
@@ -35,7 +34,7 @@ class Server:
     threading.Thread(target=self._set_first).start()
     
     #ejecutar al unirme a la red
-    os.mkdir(f'{DIR}/db')
+    create_folder(f'{DIR}/db')
     self._broadcast.join() 
     self._broadcast.fix_finger()
   
@@ -102,7 +101,7 @@ class Server:
     return response
   ############################################################################################ 
   
-  ############################ INTERACCIONES CON LA DB #######################################
+  ############################## INTERACCIONES CON LA DB #####################################
   #registrar un usuario
   def register(self, id: str, name: str, number: int) -> str:
     if not self._first:
@@ -328,6 +327,9 @@ class Server:
         if option == JOIN:
           if addr[0] != self._ip and self._first:
             self._send_data(CONFIRM_FIRST, addr[0], self._tcp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
+          
+          else:
+            print('Block myself')
             
         if option == FIX_FINGER:
           if addr[0] != self._ip:
@@ -337,7 +339,10 @@ class Server:
           else:
             if not self._leader:
               self._finger = [self._succ] * 160
-              
+            
+            else:
+              print('Block myself')
+            
   @property
   def id(self):
     return self._id
