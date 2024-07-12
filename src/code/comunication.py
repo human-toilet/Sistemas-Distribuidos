@@ -102,7 +102,7 @@ class BroadcastRef():
   
   #mandar una solicitud a todos los nodos para unirme
   def join(self):
-    self._send_data(JOIN, 'join')
+    self._send_data(JOIN)
   
   #mandar una solicitud a todos los nodos para que actualicen sus finger tables
   def fix_finger(self):
