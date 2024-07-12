@@ -5,6 +5,7 @@ import socket
 JOIN = 'join'
 CONFIRM_FIRST = 'conf_first'
 FIX_FINGER = 'fix_fing'
+FIND_FIRST = 'fnd_first'
 
 BROADCAST_IP = '255.255.255.255' #dirección de broadcast
 TCP_PORT = 8000 #puerto de escucha del socket TCP
@@ -24,6 +25,7 @@ class NodeReference:
     self._ip = ip
     self._port = port
     
+  #enviar data 
   def _send_data(self, op: str, data=None) -> bytes:
     try:
       with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -60,12 +62,19 @@ class NodeReference:
   def recv_msg(self, id: str, name: str, number: int, msg: str) -> str:
     response = self._send_data(RECV_MSG, f'{id}|{name}|{number}|{msg}')
     return response
-  ###############################################################################################
+  ############################################################################################
   
+  ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
-  def join(self, id, ip, port):
+  def join(self, ip, port):
     response = self._send_data(JOIN, f'{ip}|{port}')
     return response
+  
+  #buscar el nodo 'first'
+  def find_first(self):
+    response = self._send_data(FIND_FIRST)
+    return response
+  ############################################################################################ 
   
   @property
   def id(self):
@@ -91,8 +100,11 @@ class BroadcastRef():
       print(f"Error sending data: {e}")
       return b''
   
+  #mandar una solicitud a todos los nodos para unirme
   def join(self):
     self._send_data(JOIN, 'join')
   
-  def fix_finger(self, ip: str):
-    self._send_data(FIX_FINGER, 'fix finger')
+  #mandar una solicitud a todos los nodos para que actualicen sus finger tables
+  def fix_finger(self):
+    self._send_data(FIX_FINGER)
+    
