@@ -1,9 +1,11 @@
 import hashlib
 import socket
 
+#hashear la data
 def set_id(data: str):
   return str(hashlib.sha1(data.encode()).hexdigest())
 
+#optener mi ip
 def get_ip() -> str:
   with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
     try:

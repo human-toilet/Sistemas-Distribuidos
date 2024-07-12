@@ -2,6 +2,7 @@
 from src.utils import set_id
 import os
 
+#direccion de donde estoy
 DIR = os.path.dirname(os.path.abspath(__file__))
 
 #encontrar un usuario segun su id

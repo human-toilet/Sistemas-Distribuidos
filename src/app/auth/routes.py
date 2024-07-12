@@ -4,6 +4,7 @@ from src.app.auth import auth, server
 from src.app.auth.forms import *
 from src.utils import set_id
 
+#ruta del logear un usuario
 @auth.route('/', methods=['GET', 'POST'])
 def login():
   form = Login()
@@ -23,6 +24,7 @@ def login():
   
   return render_template('login.html', **context)
   
+#ruta de registrar
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
   form = Register()
@@ -42,6 +44,7 @@ def register():
   
   return render_template('register.html', **context)
 
+#ruta de la homepage
 @auth.route('/homepage')
 def homepage():
   id = request.args.get('id')
@@ -57,6 +60,7 @@ def homepage():
     'my_number': my_number} 
   return render_template('homepage.html', **context)
 
+#rutar para agregar un contacto
 @auth.route('/add_contact', methods=['GET', 'POST'])
 def add_contact():
   id = request.args.get('id')
@@ -86,6 +90,7 @@ def add_contact():
   
   return render_template('add_contact.html', **context)
 
+#ruta para chatear
 @auth.route('/chat', methods=['GET', 'POST'])
 def chat():
   name = request.args.get('name')
