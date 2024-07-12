@@ -1,4 +1,5 @@
 import hashlib
+import os
 import socket
 
 #hashear la data
@@ -17,4 +18,8 @@ def get_ip() -> str:
         ip_local = '127.0.0.1'
         
     return str(ip_local)
-  
+
+#crear una carpeta en caso de que no exista
+def create_folder(path: str):
+  if not os.path.exists(path):
+    os.makedirs(path)
