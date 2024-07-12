@@ -4,6 +4,7 @@ import socket
 #operaciones chord
 JOIN = 'join'
 CONFIRM_FIRST = 'conf_first'
+FIX_FINGER = 'fix_fing'
 
 BROADCAST_IP = '255.255.255.255' #dirección de broadcast
 TCP_PORT = 8000 #puerto de escucha del socket TCP
@@ -93,3 +94,5 @@ class BroadcastRef():
   def join(self):
     self._send_data(JOIN, 'join')
   
+  def fix_finger(self, ip: str):
+    self._send_data(FIX_FINGER, 'fix finger')

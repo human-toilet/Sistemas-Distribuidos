@@ -1,7 +1,9 @@
 #dependencias
 from src.code.db import DB
-from src.code.comunication import NodeReference, BroadcastRef
-from src.utils import set_id
+from src.code.comunication import NodeReference, BroadcastRef 
+from src.code.comunication import REGISTER, LOGIN, ADD_CONTACT, SEND_MSG, RECV_MSG
+from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER
+from src.utils import set_id, get_ip
 import socket
 import threading
 import time
@@ -9,21 +11,10 @@ import time
 TCP_PORT = 8000 #puerto de escucha del socket TCP
 UDP_PORT = 8888 #puerto de escucha del socket UDP
 
-#operaciones chord
-JOIN = 'join'
-CONFIRM_FIRST = 'con_first'
-
-#operadores database
-REGISTER = 'reg'
-LOGIN = 'log'
-ADD_CONTACT = 'add_cnt'
-SEND_MSG = 'send'
-RECV_MSG = 'recv'
-
 #server
 class Server:
   def __init__(self):
-    self._ip = socket.gethostbyname(socket.gethostname())
+    self._ip = get_ip()
     self._id = set_id(self._ip)
     self._tcp_port = TCP_PORT
     self._udp_port = UDP_PORT
@@ -34,14 +25,19 @@ class Server:
     self._finger = [self._ref] * 160
     self._leader: bool
     self._first: bool
-    self._broadcast.join()
     
     #hilos
-    threading.Thread(target=self._set_leader).start()
-    threading.Thread(target=self._set_first).start()
     threading.Thread(target=self._start_udp_server).start()
     threading.Thread(target=self._start_tcp_server).start()
+    threading.Thread(target=self._set_leader).start()
+    threading.Thread(target=self._set_first).start()
     
+    #ejecutar al unirme a la red
+    self._broadcast.join() 
+    self._broadcast.fix_finger(self._ip)
+  
+  ############################### OPERACIONES CHORD ##########################################
+  #unir un nodo a la red
   def _join(self, id: str, ip: str, port: str):
     if id < self._id:
       if self._pred == None:
@@ -61,17 +57,20 @@ class Server:
   
       response = self._succ.join(id, ip, port)
       return response 
-      
+  
+  #saber si soy el nodo de menor id
   def _set_first(self):
     while(True):
       self._first = True if self._pred == None or self._pred.id > self.id else False
       time.sleep(5)
     
+  #saber si soy el nodo de mayor id
   def _set_leader(self):
     while(True):
       self._leader = True if self._pred == None or self._succ.id < self.id else False
       time.sleep(5)
   
+  #actualizar la finger cuando entra un nodo
   def _fix_finger(self, node: NodeReference):
     for i in range(160):
       if node.id < self._finger[i].id:
@@ -79,13 +78,16 @@ class Server:
           self._finger[i] = node
       
       else:
-        break
+        if self._id == self._finger[i].id:
+          self._finger[i] = node
   
+  #escoger el nodo mas cercano en la busqueda logaritmica
   def _closest_preceding_finger(self, id: str) -> NodeReference:
     for i in range(160):
       if self._finger[i] != None and self._finger[id] > id:
         return self._finger[i - 1]
-    
+  ############################################################################################ 
+  
   ############################ INTERACCIONES CON LA DB #######################################
   #registrar un usuario
   def _register(self, id: str, name: str, number: int) -> str:
@@ -139,7 +141,7 @@ class Server:
     response = self._closest_preceding_finger(id).recv_msg(id, name, number)
     print(response)
     return response
-  ###############################################################################################
+  ############################################################################################
   
   #enviar data a oros servidores
   def _send_data(self, op: str, ip: str, port: str, data=None):
@@ -156,7 +158,8 @@ class Server:
   def _start_tcp_server(self):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
       s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-      s.bind((self.ip, self.port))
+      s.bind((self.ip, self._tcp_port))
+      print(f'Socket TCP binded to ({self._ip}, {self._tcp_port})')
       s.listen(10)
       
       while True:
@@ -234,18 +237,29 @@ class Server:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
       s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-      s.bind((self._ip, self._udp_port))
+      s.bind(('', self._udp_port))
+      print(f'Socket UDP binded to {self._udp_port}')
   
       while(True):
         data_recv = s.recvfrom(1024)
         data = data_recv[0].decode().split('|')
         addr = data_recv[1]
+        print(f'Recived data: {data} from {addr[0]}')
         option = data[0]
         
         if option == JOIN:
-          if addr != (self._ip, self._udp_port) and self._first:
-              self._send_data(CONFIRM_FIRST, addr[0], addr[1], f'{JOIN}|{self._ip}|{self._tcp_port}')
-        
+          if addr[0] != self._ip and self._first:
+            self._send_data(CONFIRM_FIRST, addr[0], self._tcp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
+            
+        if option == FIX_FINGER:
+          if addr[0] != self._ip:
+            ref = NodeReference(addr[0], TCP_PORT)
+            self._fix_finger(ref)
+          
+          else:
+            if not self._leader:
+              self._finger = [self._succ] * 160
+              
   @property
   def id(self):
     return self._id
