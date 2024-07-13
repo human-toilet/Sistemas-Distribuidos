@@ -1,5 +1,7 @@
+#dependencias
 import hashlib
 import os
+import shutil
 import socket
 
 #hashear la data
@@ -23,3 +25,8 @@ def get_ip() -> str:
 def create_folder(path: str):
   if not os.path.exists(path):
     os.makedirs(path)
+
+#borrar folder
+def rem_dir(dir: str):
+  if os.path.exists(dir):
+    shutil.rmtree(dir)
