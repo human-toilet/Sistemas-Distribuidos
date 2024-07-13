@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired, Length, NumberRange
 
 #formulario de la vista 'register'
 class Register(FlaskForm):
-  username = StringField('username', validators=[DataRequired(), Length(4, 16, message='between 4 and 16 characters')])
+  username = StringField('username', validators=[DataRequired(), Length(1, 16, message='max 16 characters')])
   number = IntegerField('number', validators=[DataRequired(), NumberRange(min=10000000, message='invalid number (8 digits required)')])
   submit = SubmitField('sign up')
   
@@ -17,7 +17,7 @@ class Login(FlaskForm):
   
 #formulario de la vista 'add_contact'
 class AddContact(FlaskForm):
-  name = StringField('name', validators=[DataRequired(), Length(4, 16, message='between 4 and 16 characters')])
+  name = StringField('name', validators=[DataRequired(), Length(1, 16, message='max 16 characters')])
   number = IntegerField('number', validators=[DataRequired(), NumberRange(min=10000000, message='invalid number (8 digits required)')])
   submit = SubmitField('add contact')
   
