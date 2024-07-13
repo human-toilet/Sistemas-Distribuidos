@@ -11,8 +11,9 @@ def find_user(id: str) -> str:
     if set_id(user) == id:
       return f'{DIR}/db/{user}'
 
-#objeto para encapsular la db
+#objeto para encapsular la interaccion del usuario con la db
 class DB:
+  #registrar un usuario en la db
   @classmethod
   def register(cls, name: str, number: int) -> str:
     #verificar si esta en la db
@@ -27,6 +28,7 @@ class DB:
       
     return 'Succesful registration'
     
+  #logear un usuario
   @classmethod
   def login(cls, name: str, number: int) -> str:
     #verificar si esta en la db
@@ -36,6 +38,7 @@ class DB:
     
     return 'User not registred'
 
+  #agregar un contacto
   @classmethod
   def add_contact(cls, id: str, name: str, number: int) -> str:
     #referenciar el usuario segun el id
@@ -51,7 +54,8 @@ class DB:
     
     with open(f'{user}/contacts.txt', 'r') as f:
       return f.read().strip()
-      
+   
+  #enviar un sms   
   @classmethod
   def send_msg(cls, id: str, name: str, number: int, msg: str) -> str:
     user = find_user(id)
@@ -63,6 +67,7 @@ class DB:
     with open(f'{user}/{endpoint}.txt', 'r') as f:
       return f.read().strip() 
   
+  #recibir un sms
   @classmethod
   def recv_msg(cls, id: str, name: str, number: str, msg: str) -> str:
     #agregar el contacto si no esta
@@ -75,7 +80,6 @@ class DB:
       
     with open(f'{user}/{endpoint}.txt', 'r') as f:
       return f.read() 
-
   
       
 
