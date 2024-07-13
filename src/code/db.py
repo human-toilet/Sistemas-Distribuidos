@@ -6,7 +6,7 @@ import os
 DIR = os.path.dirname(os.path.abspath(__file__))
 
 #encontrar un usuario segun su id
-def find_user(id: str) -> str:
+def find_user(id: int) -> str:
   for user in os.listdir(f'{DIR}/db'):
     if set_id(user) == id:
       return f'{DIR}/db/{user}'
@@ -40,7 +40,7 @@ class DB:
 
   #agregar un contacto
   @classmethod
-  def add_contact(cls, id: str, name: str, number: int) -> str:
+  def add_contact(cls, id: int, name: str, number: int) -> str:
     #referenciar el usuario segun el id
     user = find_user(id)
       
@@ -57,7 +57,7 @@ class DB:
    
   #enviar un sms   
   @classmethod
-  def send_msg(cls, id: str, name: str, number: int, msg: str) -> str:
+  def send_msg(cls, id: int, name: str, number: int, msg: str) -> str:
     user = find_user(id)
     endpoint = f'{name} - {number}'
     
@@ -69,7 +69,7 @@ class DB:
   
   #recibir un sms
   @classmethod
-  def recv_msg(cls, id: str, name: str, number: str, msg: str) -> str:
+  def recv_msg(cls, id: int, name: str, number: str, msg: str) -> str:
     #agregar el contacto si no esta
     cls.add_contact(id, name, number)
     user = find_user(id)
@@ -81,8 +81,6 @@ class DB:
     with open(f'{user}/{endpoint}.txt', 'r') as f:
       return f.read() 
   
-      
-
   
       
     

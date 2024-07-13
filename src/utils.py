@@ -6,7 +6,7 @@ import socket
 
 #hashear la data
 def set_id(data: str):
-  return str(hashlib.sha1(data.encode()).hexdigest())
+  return int(hashlib.sha1(data.encode()).hexdigest(), 16)
 
 #optener mi ip
 def get_ip() -> str:

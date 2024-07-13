@@ -47,7 +47,7 @@ def register():
 #ruta de la homepage
 @auth.route('/homepage')
 def homepage():
-  id = request.args.get('id')
+  id = id(request.args.get('id'))
   my_name = request.args.get('my_name')
   my_number = request.args.get('my_number')
   data = request.args.get('data')
@@ -63,7 +63,7 @@ def homepage():
 #rutar para agregar un contacto
 @auth.route('/add_contact', methods=['GET', 'POST'])
 def add_contact():
-  id = request.args.get('id')
+  id = int(request.args.get('id'))
   my_name = request.args.get('my_name')
   my_number = request.args.get('my_number')
   data = request.args.get('data')
@@ -95,7 +95,7 @@ def add_contact():
 def chat():
   name = request.args.get('name')
   number = request.args.get('number')
-  id = request.args.get('id')
+  id = int(request.args.get('id'))
   my_name = request.args.get('my_name')
   my_number = request.args.get('my_number')
   data = request.args.get('data')
@@ -109,6 +109,7 @@ def chat():
     
   context = {
     'form': form,
+    'id': id,
     'name': name,
     'state': chat_state.split('\n'),
     'my_name': my_name, 

@@ -41,27 +41,27 @@ class NodeReference:
   
   ############################ INTERACCIONES CON LA DB #######################################
   #registrar un usuario
-  def register(self, id: str, name: str, number: int):
+  def register(self, id: int, name: str, number: int):
     response = self._send_data(REGISTER, f'{id}|{name}|{number}').decode()
     return response
   
   #logear a un usuario
-  def login(self, id: str, name: str, number: int):
+  def login(self, id: int, name: str, number: int):
     response = self._send_data(LOGIN, f'{id}|{name}|{number}').decode()
     return response
       
   #un usuario agreaga un contacto
-  def add_contact(self, id: str, name: str, number: int):
+  def add_contact(self, id: int, name: str, number: int):
     response = self._send_data(ADD_CONTACT, f'{id}|{name}|{number}').decode()
     return response
   
   #un usuario envia un sms
-  def send_msg(self, id: str, name: str, number: int, msg: str) -> str:
+  def send_msg(self, id: int, name: str, number: int, msg: str) -> str:
     response = self._send_data(SEND_MSG, f'{id}|{name}|{number}|{msg}')
     return response
   
   #un usuario recibe un sms
-  def recv_msg(self, id: str, name: str, number: int, msg: str) -> str:
+  def recv_msg(self, id: int, name: str, number: int, msg: str) -> str:
     response = self._send_data(RECV_MSG, f'{id}|{name}|{number}|{msg}')
     return response
   ############################################################################################
@@ -77,9 +77,9 @@ class NodeReference:
     response = self._send_data(FIND_FIRST)
     return response
   
-  #pedir data a mi sucesor
-  def request_data(self):
-    response = self._send_data(REQUEST_DATA)
+  #pedir data a mis conexiones
+  def request_data(self, id: int):
+    response = self._send_data(REQUEST_DATA, f'{id}')
     return response
   ############################################################################################ 
   
@@ -97,6 +97,7 @@ class NodeReference:
   
 #enviar mensajes por broadcast a la red
 class BroadcastRef():  
+  #enviar data
   def _send_data(self, op: str, data=None) -> bytes:
     try:
       with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:

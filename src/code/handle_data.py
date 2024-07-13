@@ -5,15 +5,16 @@ import os
 
 #manejar data
 class HandleData():
-  def __init__(self):
+  def __init__(self, id: int):
     self._garbage = []
+    self._id = id
    
   #devolver data correspondiente a un usuario segun su id 
-  def data(self, id: str) -> str:
+  def data(self, id: int) -> str:
     result = ''
     
     for user in os.listdir(f'{DIR}/db'):
-      if set_id(user) < id:
+      if (id < self._id and set_id(user) < id) or (id > self._id and set_id(user) > self._id):
         result += f'{user}'
         
         for file in os.listdir(f'{DIR}/db/{user}'):

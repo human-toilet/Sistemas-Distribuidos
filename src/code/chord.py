@@ -4,7 +4,7 @@ from src.code.comunication import NodeReference, BroadcastRef
 from src.code.comunication import REGISTER, LOGIN, ADD_CONTACT, SEND_MSG, RECV_MSG
 from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER, FIND_FIRST, REQUEST_DATA
 from src.code.db import DIR
-from handle_data import HandleData
+from src.code.handle_data import HandleData
 from src.utils import set_id, get_ip, create_folder
 import socket
 import threading
@@ -22,7 +22,7 @@ class Server:
     self._udp_port = UDP_PORT
     self._ref = NodeReference(self._ip, self._tcp_port)
     self._broadcast = BroadcastRef()
-    self._handler = HandleData()
+    self._handler = HandleData(self._id)
     self._succ = self._ref
     self._pred = None
     self._finger = [self._ref] * 160
@@ -43,7 +43,7 @@ class Server:
   
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
-  def _join(self, id: str, ip: str, port: str):
+  def _join(self, id: int, ip: str, port: str):
     if id < self._id:
       if self._pred == None:
         response = f'{self._ip}|{self._tcp_port}|{self._ip}|{self._tcp_port}'
@@ -87,7 +87,7 @@ class Server:
           self._finger[i] = node
   
   #escoger el nodo mas cercano en la busqueda logaritmica
-  def _closest_preceding_finger(self, id: str) -> NodeReference:
+  def _closest_preceding_finger(self, id: int) -> NodeReference:
     for i in range(160):
       if self._finger[i] > id:
         if i == 0:
@@ -106,13 +106,18 @@ class Server:
   #pedirle data a mi sucesor
   def _request_data(self):
     if self._succ.id != self._id:
-      response = self._succ.request_data()
-      self._handler.create(response)
+      response_succ = self._succ.request_data(self._id)
+      response_pred = self._pred.request_data(self._id)
+      self._handler.create(response_succ)
+      self._handler.create(response_pred)
+    
+    else:
+      print('Block myself')
   ############################################################################################ 
   
   ############################## INTERACCIONES CON LA DB #####################################
   #registrar un usuario
-  def register(self, id: str, name: str, number: int) -> str:
+  def register(self, id: int, name: str, number: int) -> str:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
@@ -124,7 +129,7 @@ class Server:
       return self._register(id, name, number)
   
   #registrar un usuario
-  def _register(self, id: str, name: str, number: int) -> str:
+  def _register(self, id: int, name: str, number: int) -> str:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.register(name, number)
       print(response)
@@ -134,7 +139,7 @@ class Server:
     return response
   
   #logear a un usuario
-  def login(self, id: str, name: str, number: int) -> str:
+  def login(self, id: int, name: str, number: int) -> str:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
@@ -146,7 +151,7 @@ class Server:
       return self._login(id, name, number)
   
   #logear a un usuario
-  def _login(self, id: str, name: str, number: int) -> str:
+  def _login(self, id: int, name: str, number: int) -> str:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.login(name, number)
       print(response)
@@ -157,7 +162,7 @@ class Server:
     return response
   
   #un usuario agreaga un contacto
-  def add_contact(self, id: str, name: str, number: int) -> str:
+  def add_contact(self, id: int, name: str, number: int) -> str:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
@@ -169,7 +174,7 @@ class Server:
       return self._add_contact(id, name, number)
   
   #un usuario agreaga un contacto
-  def _add_contact(self, id: str, name: str, number: int) -> str:
+  def _add_contact(self, id: int, name: str, number: int) -> str:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.add_contact(id, name, number)
       print(response)
@@ -179,7 +184,7 @@ class Server:
     return response
   
   #un usuario envia un sms
-  def send_msg(self, id: str, name: str, number: int, msg: str) -> str:
+  def send_msg(self, id: int, name: str, number: int, msg: str) -> str:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
@@ -191,7 +196,7 @@ class Server:
       return self._send_msg(id, name, number, msg)
   
   #un usuario envia un sms
-  def _send_msg(self, id: str, name: str, number: int, msg: str) -> str:
+  def _send_msg(self, id: int, name: str, number: int, msg: str) -> str:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.send_msg(id, name, number, msg)
       print(response)
@@ -202,7 +207,7 @@ class Server:
     return response
   
   #un usuario recibe un sms
-  def recv_msg(self, id: str, name: str, number: int, msg: str) -> str:
+  def recv_msg(self, id: int, name: str, number: int, msg: str) -> str:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
@@ -214,7 +219,7 @@ class Server:
       return self._recv_msg(id, name, number, msg)
   
   #un usuario recibe un sms
-  def _recv_msg(self, id: str, name: str, number: int, msg: str) -> str:
+  def _recv_msg(self, id: int, name: str, number: int, msg: str) -> str:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.recv_msg(id, name, number, msg)
       print(response)
@@ -266,28 +271,28 @@ class Server:
           conn.sendall(data_resp)
         
         elif option == REGISTER:
-          id = data[1]
+          id = int(data[1])
           name = data[2]
           number = str(data[3])
           data_resp = self._register(id, name, number)
           conn.sendall(data_resp)
           
         elif option == LOGIN:
-          id = data[1]
+          id = int(data[1])
           name = data[2]
           number = str(data[3])
           data_resp = self._login(id, name, number)
           conn.sendall(data_resp)
           
         elif option == ADD_CONTACT:
-          id = data[1]
+          id = int(data[1])
           name = data[2]
           number = str(data[3])
           data_resp = self._add_contact(id, name, number)
           conn.sendall(data_resp)
           
         elif option == SEND_MSG:
-          id = data[1]
+          id = int(data[1])
           name = data[2]
           number = str(data[3])
           msg = data[4]
@@ -295,7 +300,7 @@ class Server:
           conn.sendall(data_resp)
           
         elif option == RECV_MSG:
-          id = data[1]
+          id = int(data[1])
           name = data[2]
           number = str(data[3])
           msg = data[4]
@@ -303,7 +308,7 @@ class Server:
           conn.sendall(data_resp)
           
         elif option == JOIN:
-          id = data[1]
+          id = int(data[1])
           ip = data[2]
           port = data[3]
           data_resp = self._join(id, ip, port)
@@ -315,7 +320,8 @@ class Server:
             self._pred = NodeReference(ip, id)
           
         elif option == REQUEST_DATA:
-          data_resp = self._handler.data(self._pred.id)
+          id = int(data[1])
+          data_resp = self._handler.data(id)
           conn.sendall(data_resp)
               
         conn.close()
