@@ -2,8 +2,9 @@
 from src.code.db import DB
 from src.code.comunication import NodeReference, BroadcastRef 
 from src.code.comunication import REGISTER, LOGIN, ADD_CONTACT, SEND_MSG, RECV_MSG
-from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER, FIND_FIRST
+from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER, FIND_FIRST, REQUEST_DATA
 from src.code.db import DIR
+from handle_data import HandleData
 from src.utils import set_id, get_ip, create_folder
 import socket
 import threading
@@ -21,6 +22,7 @@ class Server:
     self._udp_port = UDP_PORT
     self._ref = NodeReference(self._ip, self._tcp_port)
     self._broadcast = BroadcastRef()
+    self._handler = HandleData()
     self._succ = self._ref
     self._pred = None
     self._finger = [self._ref] * 160
@@ -37,6 +39,7 @@ class Server:
     create_folder(f'{DIR}/db')
     self._broadcast.join() 
     self._broadcast.fix_finger()
+    self._request_data()
   
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
@@ -99,6 +102,12 @@ class Server:
     
     response = self._succ.find_first()
     return response
+  
+  #pedirle data a mi sucesor
+  def _request_data(self):
+    if self._succ.id != self._id:
+      response = self._succ.request_data()
+      self._handler.create(response)
   ############################################################################################ 
   
   ############################## INTERACCIONES CON LA DB #####################################
@@ -304,7 +313,9 @@ class Server:
             
           elif data_resp[2] == self._ip and data_resp[3] == self._tcp_port:
             self._pred = NodeReference(ip, id)
-            
+          
+        elif option == REQUEST_DATA:
+          data_resp = self._handler.data(self._pred.id)
           conn.sendall(data_resp)
               
         conn.close()

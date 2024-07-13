@@ -1,3 +1,4 @@
+#dependencias
 from src.utils import set_id
 import socket
 
@@ -6,6 +7,7 @@ JOIN = 'join'
 CONFIRM_FIRST = 'conf_first'
 FIX_FINGER = 'fix_fing'
 FIND_FIRST = 'fnd_first'
+REQUEST_DATA = 'req_data'
 
 BROADCAST_IP = '255.255.255.255' #dirección de broadcast
 TCP_PORT = 8000 #puerto de escucha del socket TCP
@@ -74,6 +76,11 @@ class NodeReference:
   def find_first(self):
     response = self._send_data(FIND_FIRST)
     return response
+  
+  #pedir data a mi sucesor
+  def request_data(self):
+    response = self._send_data(REQUEST_DATA)
+    return response
   ############################################################################################ 
   
   @property
@@ -107,4 +114,5 @@ class BroadcastRef():
   #mandar una solicitud a todos los nodos para que actualicen sus finger tables
   def fix_finger(self):
     self._send_data(FIX_FINGER)
+    
     
