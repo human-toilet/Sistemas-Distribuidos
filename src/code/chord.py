@@ -235,7 +235,7 @@ class Server:
   def _send_data(self, op: str, ip: str, port: str, data=None):
     try:
       with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.sendto(f'{op}|{data}', (ip, port))
+        s.sendto(f'{op}|{data}'.encode('utf-8'), (ip, port))
       
     except Exception as e:
       print(f"Error sending data: {e}")
