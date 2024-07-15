@@ -39,9 +39,20 @@ class Server:
     #ejecutar al unirme a la red
     create_folder(f'{DIR}/db')
     self._broadcast.join() 
-    #self._broadcast.fix_finger()
-    #self._request_data()
+    self._broadcast.fix_finger()
+    self._request_data()
   
+  #enviar data a los servidores udp
+  def _send_data(self, op: str, ip: str, port: str, data=None):
+    try:
+      with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.sendto(f'{op}|{data}'.encode('utf-8'), (ip, port))
+      
+    except Exception as e:
+      print(f"Error sending data: {e}")
+      return b''
+    
+    
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
   def _join(self, ip: str, port: str):
@@ -78,7 +89,7 @@ class Server:
     while(True):
       self._leader = True if self._pred == None or self._succ.id < self.id else False
       time.sleep(5)
-  
+    
   #actualizar la finger cuando entra un nodo
   def _fix_finger(self, node: NodeReference):
     for i in range(160):
@@ -116,6 +127,7 @@ class Server:
       self._handler.create(response_pred)
   ############################################################################################ 
   
+  
   ############################## INTERACCIONES CON LA DB #####################################
   #registrar un usuario
   def register(self, id: int, name: str, number: int) -> str:
@@ -124,17 +136,17 @@ class Server:
       ip = data_first[0]
       port = data_first[1]
       first = NodeReference(ip, port)
-      return first.register(id, name, number)
+      return first.register(id, name, number).decode()
     
     else:
-      return self._register(id, name, number)
+      return self._register(id, name, number).decode()
   
   #registrar un usuario
-  def _register(self, id: int, name: str, number: int) -> str:
+  def _register(self, id: int, name: str, number: int) -> bytes:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.register(name, number)
       print(response)
-      return response
+      return response.encode()
     
     response = self._closest_preceding_finger(id).register(id, name, number)
     return response
@@ -146,17 +158,17 @@ class Server:
       ip = data_first[0]
       port = data_first[1]
       first = NodeReference(ip, port)
-      return first.login(id, name, number)
+      return first.login(id, name, number).decode()
     
     else:
-      return self._login(id, name, number)
+      return self._login(id, name, number).decode()
   
   #logear a un usuario
-  def _login(self, id: int, name: str, number: int) -> str:
+  def _login(self, id: int, name: str, number: int) -> bytes:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.login(name, number)
       print(response)
-      return response
+      return response.encode()
 
     response = self._closest_preceding_finger(id).login(id, name, number)
     print(response)
@@ -169,17 +181,17 @@ class Server:
       ip = data_first[0]
       port = data_first[1]
       first = NodeReference(ip, port)
-      return first.add_contact(id, name, number)
+      return first.add_contact(id, name, number).decode()
     
     else:
-      return self._add_contact(id, name, number)
+      return self._add_contact(id, name, number).decode()
   
   #un usuario agreaga un contacto
-  def _add_contact(self, id: int, name: str, number: int) -> str:
+  def _add_contact(self, id: int, name: str, number: int) -> bytes:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.add_contact(id, name, number)
       print(response)
-      return response
+      return response.encode()
 
     response = self._closest_preceding_finger(id).add_contact(id, name, number)
     return response
@@ -191,17 +203,17 @@ class Server:
       ip = data_first[0]
       port = data_first[1]
       first = NodeReference(ip, port)
-      return first.send_msg(id, name, number, msg)
+      return first.send_msg(id, name, number, msg).decode()
     
     else:
-      return self._send_msg(id, name, number, msg)
+      return self._send_msg(id, name, number, msg).decode()
   
   #un usuario envia un sms
-  def _send_msg(self, id: int, name: str, number: int, msg: str) -> str:
+  def _send_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.send_msg(id, name, number, msg)
       print(response)
-      return response
+      return response.encode()
     
     response = self._closest_preceding_finger(id).send_msg(id, name, number)
     print(response)
@@ -214,33 +226,25 @@ class Server:
       ip = data_first[0]
       port = data_first[1]
       first = NodeReference(ip, port)
-      return first.recv_msg(id, name, number, msg)
+      return first.recv_msg(id, name, number, msg).decode()
     
     else:
-      return self._recv_msg(id, name, number, msg)
+      return self._recv_msg(id, name, number, msg).decode()
   
   #un usuario recibe un sms
-  def _recv_msg(self, id: int, name: str, number: int, msg: str) -> str:
+  def _recv_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
     if (id < self._id) or (id > self._id and self._leader):
       response = DB.recv_msg(id, name, number, msg)
       print(response)
-      return response
+      return response.encode()
     
     response = self._closest_preceding_finger(id).recv_msg(id, name, number)
     print(response)
     return response
   ############################################################################################
   
-  #enviar data a los servidores udp
-  def _send_data(self, op: str, ip: str, port: str, data=None):
-    try:
-      with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.sendto(f'{op}|{data}'.encode('utf-8'), (ip, port))
-      
-    except Exception as e:
-      print(f"Error sending data: {e}")
-      return b''
-  
+   
+  ###################################### SOCKETS #############################################
   #iniciar server tcp
   def _start_tcp_server(self):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -253,6 +257,7 @@ class Server:
         conn, addr = s.accept()
         print(f'new connection from {addr}' )
         data = conn.recv(1024).decode().split('|')
+        print(f'Recived data: {data}')
         option = data[0]
           
         if option == FIND_FIRST:
@@ -366,23 +371,9 @@ class Server:
           
           if action == JOIN:            
             data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
-            print(data_resp)
             self._pred = NodeReference(data_resp[0], data_resp[1])
             self._succ = NodeReference(data_resp[2], data_resp[3])
-             
-  @property
-  def id(self):
-    return self._id
-  
-  @property
-  def ip(self):
-    return self._ip
-  
-  @property
-  def tcp_port(self):
-    return self._tcp_port
-  
-  
+  ############################################################################################
 
     
     

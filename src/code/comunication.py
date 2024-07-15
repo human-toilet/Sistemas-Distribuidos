@@ -31,7 +31,7 @@ class NodeReference:
   def _send_data(self, op: str, data=None) -> bytes:
     try:
       with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((self.ip, self.port))
+        s.connect((self._ip, int(self._port)))
         s.sendall(f'{op}|{data}'.encode('utf-8'))
         return s.recv(1024)
       
@@ -39,32 +39,34 @@ class NodeReference:
       print(f"Error sending data: {e}")
       return b''
   
+  
   ############################ INTERACCIONES CON LA DB #######################################
   #registrar un usuario
-  def register(self, id: int, name: str, number: int):
-    response = self._send_data(REGISTER, f'{id}|{name}|{number}').decode()
+  def register(self, id: int, name: str, number: int) -> bytes:
+    response = self._send_data(REGISTER, f'{id}|{name}|{number}')
     return response
   
   #logear a un usuario
-  def login(self, id: int, name: str, number: int):
-    response = self._send_data(LOGIN, f'{id}|{name}|{number}').decode()
+  def login(self, id: int, name: str, number: int) -> bytes:
+    response = self._send_data(LOGIN, f'{id}|{name}|{number}')
     return response
       
   #un usuario agreaga un contacto
-  def add_contact(self, id: int, name: str, number: int):
-    response = self._send_data(ADD_CONTACT, f'{id}|{name}|{number}').decode()
+  def add_contact(self, id: int, name: str, number: int) -> bytes:
+    response = self._send_data(ADD_CONTACT, f'{id}|{name}|{number}')
     return response
   
   #un usuario envia un sms
-  def send_msg(self, id: int, name: str, number: int, msg: str) -> str:
+  def send_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
     response = self._send_data(SEND_MSG, f'{id}|{name}|{number}|{msg}')
     return response
   
   #un usuario recibe un sms
-  def recv_msg(self, id: int, name: str, number: int, msg: str) -> str:
+  def recv_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
     response = self._send_data(RECV_MSG, f'{id}|{name}|{number}|{msg}')
     return response
   ############################################################################################
+  
   
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
