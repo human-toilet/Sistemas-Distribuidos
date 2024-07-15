@@ -43,11 +43,14 @@ class Server:
   
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
-  def _join(self, id: int, ip: str, port: str):
+  def _join(self, ip: str, port: str):
+    id = set_id(ip)
+    
     if id < self._id:
       if self._pred == None:
         response = f'{self._ip}|{self._tcp_port}|{self._ip}|{self._tcp_port}'
         self._pred = NodeReference(ip, port)
+        self._succ = NodeReference(ip, port)
         return response
       
       response = f'{self._pred.ip}|{self._pred.port}|{self._ip}|{self._tcp_port}'
@@ -261,8 +264,10 @@ class Server:
           port = data[3]   
           first = NodeReference(ip, port)
           
-          if action == JOIN:             
-            data_resp = first.join(self._id, self._ip, self._tcp_port).decode().split('|')
+          if action == JOIN:   
+            print(first.ip)          
+            data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
+            print(data_resp)
             self._pred = NodeReference(data_resp[0], data_resp[1])
             self._succ = NodeReference(data_resp[2], data_resp[3])
           
@@ -308,16 +313,17 @@ class Server:
           conn.sendall(data_resp)
           
         elif option == JOIN:
-          id = int(data[1])
-          ip = data[2]
-          port = data[3]
-          data_resp = self._join(id, ip, port)
+          ip = data[1]
+          port = data[2]
+          data_resp = self._join(ip, port)
           
           if data_resp[0] == self._ip and data_resp[1] == self._tcp_port:
             self._succ = NodeReference(ip, id)
             
           elif data_resp[2] == self._ip and data_resp[3] == self._tcp_port:
             self._pred = NodeReference(ip, id)
+          
+          conn.sendall(data_resp)
           
         elif option == REQUEST_DATA:
           id = int(data[1])
