@@ -30,8 +30,9 @@ class Server:
     self._first: bool
     
     #hilos
-    threading.Thread(target=self._start_udp_server).start()
+    threading.Thread(target=self._start_broadcast_server).start()
     threading.Thread(target=self._start_tcp_server).start()
+    threading.Thread(target=self._start_udp_server).start()
     threading.Thread(target=self._set_leader).start()
     threading.Thread(target=self._set_first).start()
     
@@ -113,9 +114,6 @@ class Server:
       response_pred = self._pred.request_data(self._id)
       self._handler.create(response_succ)
       self._handler.create(response_pred)
-    
-    else:
-      print('Block myself')
   ############################################################################################ 
   
   ############################## INTERACCIONES CON LA DB #####################################
@@ -233,7 +231,7 @@ class Server:
     return response
   ############################################################################################
   
-  #enviar data a oros servidores
+  #enviar data a los servidores udp
   def _send_data(self, op: str, ip: str, port: str, data=None):
     try:
       with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -318,14 +316,41 @@ class Server:
               
         conn.close()
   
-  #iniciar server udp
-  def _start_udp_server(self):
+  #iniciar server para escuchar broadcasting
+  def _start_broadcast_server(self):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
       s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
       s.bind(('', self._udp_port))
-      print(f'Socket UDP binded to {self._udp_port}')
+      print(f'Socket broadcast binded to {self._udp_port}')
   
+      while(True):
+        data_recv = s.recvfrom(1024)
+        data = data_recv[0].decode().split('|')
+        addr = data_recv[1]
+        print(f'Recived data: {data} from {addr[0]}')
+        option = data[0]
+        
+        if option == JOIN:
+          if addr[0] != self._ip and self._first:
+            self._send_data(CONFIRM_FIRST, addr[0], self._tcp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
+            
+        if option == FIX_FINGER:
+          if addr[0] != self._ip:
+            ref = NodeReference(addr[0], TCP_PORT)
+            self._fix_finger(ref)
+          
+          else:
+            if not self._leader:
+              self._finger = [self._succ] * 160
+  
+  #iniciar server udp
+  def _start_udp_server(self):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+      s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+      s.bind((self._ip, self._udp_port))
+      print(f'Socket UDP binded to ({self._ip}, {self._udp_port})')
+      
       while(True):
         data_recv = s.recvfrom(1024)
         data = data_recv[0].decode().split('|')
@@ -339,32 +364,12 @@ class Server:
           port = data[3]   
           first = NodeReference(ip, port)
           
-          if action == JOIN:   
-            print(data)          
+          if action == JOIN:            
             data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
             print(data_resp)
             self._pred = NodeReference(data_resp[0], data_resp[1])
             self._succ = NodeReference(data_resp[2], data_resp[3])
-        
-        elif option == JOIN:
-          if addr[0] != self._ip and self._first:
-            self._send_data(CONFIRM_FIRST, addr[0], self._tcp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
-          
-          else:
-            print('Block myself')
-            
-        if option == FIX_FINGER:
-          if addr[0] != self._ip:
-            ref = NodeReference(addr[0], TCP_PORT)
-            self._fix_finger(ref)
-          
-          else:
-            if not self._leader:
-              self._finger = [self._succ] * 160
-            
-            else:
-              print('Block myself')
-            
+             
   @property
   def id(self):
     return self._id
