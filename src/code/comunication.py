@@ -9,7 +9,7 @@ FIX_FINGER = 'fix_fing'
 FIND_FIRST = 'fnd_first'
 REQUEST_DATA = 'req_data'
 
-BROADCAST_IP = '255.255.255.255' #dirección de broadcast
+BROADCAST_IP = '192.168.161.255' #dirección de broadcast
 TCP_PORT = 8000 #puerto de escucha del socket TCP
 UDP_PORT = 8888 #puerto de escucha del socket UDP
 
