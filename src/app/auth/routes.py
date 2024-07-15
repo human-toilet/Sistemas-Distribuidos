@@ -47,7 +47,7 @@ def register():
 #ruta de la homepage
 @auth.route('/homepage')
 def homepage():
-  id = id(request.args.get('id'))
+  id = int(request.args.get('id'))
   my_name = request.args.get('my_name')
   my_number = request.args.get('my_number')
   data = request.args.get('data')
