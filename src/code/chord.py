@@ -38,8 +38,8 @@ class Server:
     #ejecutar al unirme a la red
     create_folder(f'{DIR}/db')
     self._broadcast.join() 
-    self._broadcast.fix_finger()
-    self._request_data()
+    #self._broadcast.fix_finger()
+    #self._request_data()
   
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
@@ -236,9 +236,8 @@ class Server:
   #enviar data a oros servidores
   def _send_data(self, op: str, ip: str, port: str, data=None):
     try:
-      with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((ip, port))
-        s.sendall(f'{op}|{data}'.encode('utf-8'))
+      with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.sendto(f'{op}|{data}', (ip, port))
       
     except Exception as e:
       print(f"Error sending data: {e}")
@@ -257,21 +256,8 @@ class Server:
         print(f'new connection from {addr}' )
         data = conn.recv(1024).decode().split('|')
         option = data[0]
-        
-        if option == CONFIRM_FIRST:
-          action = data[1]
-          ip = data[2]
-          port = data[3]   
-          first = NodeReference(ip, port)
           
-          if action == JOIN:   
-            print(first.ip)          
-            data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
-            print(data_resp)
-            self._pred = NodeReference(data_resp[0], data_resp[1])
-            self._succ = NodeReference(data_resp[2], data_resp[3])
-          
-        elif option == FIND_FIRST:
+        if option == FIND_FIRST:
           data_resp = self._find_first()
           conn.sendall(data_resp)
         
@@ -347,7 +333,20 @@ class Server:
         print(f'Recived data: {data} from {addr[0]}')
         option = data[0]
         
-        if option == JOIN:
+        if option == CONFIRM_FIRST:
+          action = data[1]
+          ip = data[2]
+          port = data[3]   
+          first = NodeReference(ip, port)
+          
+          if action == JOIN:   
+            print(data)          
+            data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
+            print(data_resp)
+            self._pred = NodeReference(data_resp[0], data_resp[1])
+            self._succ = NodeReference(data_resp[2], data_resp[3])
+        
+        elif option == JOIN:
           if addr[0] != self._ip and self._first:
             self._send_data(CONFIRM_FIRST, addr[0], self._tcp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
           
