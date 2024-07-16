@@ -13,7 +13,7 @@ def login():
   if form.validate_on_submit():
     username = form.username.data
     number = form.number.data
-    response = server.login(set_id(f'{username} - {number}'), username, number)
+    response = server.login(set_id(f'{username} - {number}'), username, int(number))
     
     if response == 'User not registred':
       flash(response)
@@ -33,7 +33,7 @@ def register():
   if form.validate_on_submit():
     username = form.username.data
     number = form.number.data
-    response = server.register(set_id(f'{username} - {number}'), username, number)
+    response = server.register(set_id(f'{username} - {number}'), username, int(number))
   
     if response == 'User already exists':
       flash(response)
@@ -79,8 +79,8 @@ def add_contact():
   if form.validate_on_submit():
     username = form.name.data
     number = form.number.data
-    server.register(set_id(f'{username} - {number}'), username, number)
-    response = server.add_contact(id, username, number)
+    server.register(set_id(f'{username} - {number}'), username, int(number))
+    response = server.add_contact(id, username, int(number))
   
     if response == 'Contact already exists':
       flash(response)
@@ -99,13 +99,13 @@ def chat():
   my_name = request.args.get('my_name')
   my_number = request.args.get('my_number')
   data = request.args.get('data')
-  chat_state = server.send_msg(id, name, number, '')
+  chat_state = server.send_msg(id, name, int(number), '')
   form = SendMSG()
   
   if form.validate_on_submit():
     msg = form.text.data
-    chat_state = server.send_msg(id, name, number, msg)
-    server.recv_msg(set_id(f'{name} - {number}'), my_name, my_number, msg)
+    chat_state = server.send_msg(id, name, int(number), msg)
+    server.recv_msg(set_id(f'{name} - {number}'), my_name, int(my_number), msg)
     
   context = {
     'form': form,
