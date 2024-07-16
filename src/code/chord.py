@@ -140,8 +140,8 @@ class Server:
             s.sendall(CHECK_PREDECESOR.encode('utf-8'))
             self._pred_info = s.recv(1024).decode()
 
-        except Exception as e:
-          print(e)
+        except:
+          print(f'Socket ({self._pred.ip}, {self._pred.port}) disconnected')
 
           if self._pred_info != 'not data':
             self._handler.create(self._pred_info)
@@ -374,15 +374,15 @@ class Server:
             self._finger = [self._succ] * 160
               
         elif option == NOTIFY:
+          id = int(data[1])
+          
           if addr[0] != self._ip:
-            ip = data[1]
-            
-            if self._succ.ip == ip:
+            if self._succ.id == id:
               self._succ = NodeReference(addr[0], self._tcp_port)
               send_data(UPDATE_PREDECESSOR, addr[0], UDP_PORT, f'{self._ip}|{self._tcp_port}')
           
           else:
-            if self._succ.ip == ip:
+            if self._succ.id == id:
               self._pred = None
               self._succ = self._ref
               self._finger = [self._ref] * 160
