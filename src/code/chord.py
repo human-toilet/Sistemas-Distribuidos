@@ -125,8 +125,8 @@ class Server:
   #pedirle data a mi sucesor
   def _request_data(self):
     if self._succ.id != self._id:
-      response_succ = self._succ.request_data(self._id)
-      response_pred = self._pred.request_data(self._id)
+      response_succ = self._succ.request_data(self._id).decode()
+      response_pred = self._pred.request_data(self._id).decode()
       self._handler.create(response_succ)
       self._handler.create(response_pred)
       
