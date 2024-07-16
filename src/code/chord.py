@@ -45,7 +45,9 @@ class Server:
     #ejecutar al unirme a la red
     create_folder(f'{DIR}/db')
     self._broadcast.join() 
+    time.sleep(1)
     self._broadcast.fix_finger()
+    time.sleep(1)
     self._request_data()
   
   ############################### OPERACIONES CHORD ##########################################
@@ -89,6 +91,7 @@ class Server:
   def siblings(self):
     while True:
       print(f'pred: {self._pred.id if self._pred != None else None}, succ: {self._succ.id}') 
+      print([x.id for x in self._finger[1: 3]])
       time.sleep(5)
    
   #actualizar la finger cuando entra un nodo
@@ -334,7 +337,7 @@ class Server:
           
         elif option == REQUEST_DATA:
           id = int(data[1])
-          data_resp = self._handler.data(True, id)
+          data_resp = self._handler.data(True, id).encode()
           conn.sendall(data_resp)
               
         conn.close()
@@ -405,8 +408,9 @@ class Server:
           
           if action == JOIN:            
             data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
-            self._pred = NodeReference(data_resp[0], data_resp[1])
-            self._succ = NodeReference(data_resp[2], data_resp[3])
+            print(data_resp)
+            self._pred = NodeReference(data_resp[0], int(data_resp[1]))
+            self._succ = NodeReference(data_resp[2], int(data_resp[3]))
         
         elif option == UPDATE_PREDECESSOR:
           ip = data[1]

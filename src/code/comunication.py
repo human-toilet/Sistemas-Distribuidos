@@ -33,7 +33,6 @@ class NodeReference:
     
   #enviar data 
   def _send_data(self, op: str, data=None) -> bytes:
-    print(data)
     try:
       with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((self._ip, self._port))
