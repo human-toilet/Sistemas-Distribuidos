@@ -22,8 +22,7 @@ class HandleData():
             result += f'/{file}/{f.read()}'
   
         result += '|'
-      
-      self._garbage.append(f'{DIR}/db/{user}')
+        self._garbage.append(f'{DIR}/db/{user}')
       
     self._clean(delete)
     return result
