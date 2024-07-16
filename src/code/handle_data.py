@@ -10,11 +10,11 @@ class HandleData():
     self._id = id
    
   #devolver data correspondiente a un usuario segun su id 
-  def data(self, id: int) -> str:
+  def data(self, delete: bool, id: None) -> str:
     result = ''
     
     for user in os.listdir(f'{DIR}/db'):
-      if (id < self._id and set_id(user) < id) or (id > self._id and set_id(user) > self._id):
+      if id == None or (id < self._id and set_id(user) < id) or (id > self._id and set_id(user) > self._id):
         result += f'{user}'
         
         for file in os.listdir(f'{DIR}/db/{user}'):
@@ -25,7 +25,7 @@ class HandleData():
       
       self._garbage.append(f'{DIR}/db/{user}')
       
-    self._clean()
+    self._clean(delete)
     return result
   
   #crear data en la db
@@ -46,9 +46,10 @@ class HandleData():
             f.write(chats[i + 1])
   
   #eliminar data de la db almacenada en el garbage y reiniciar el garbage
-  def _clean(self):
-    for user in self._garbage:
-      rem_dir(user)
+  def _clean(self, delete: bool):
+    if delete:
+      for user in self._garbage:
+        rem_dir(user)
     
     self._garbage = []
-    
+   

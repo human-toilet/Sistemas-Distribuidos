@@ -8,6 +8,10 @@ CONFIRM_FIRST = 'conf_first'
 FIX_FINGER = 'fix_fing'
 FIND_FIRST = 'fnd_first'
 REQUEST_DATA = 'req_data'
+CHECK_PREDECESOR = 'check_pred'
+NOTIFY = 'notf'
+UPDATE_PREDECESSOR = 'upt_pred'
+UPDATE_FINGER = 'upd_fin'
 
 BROADCAST_IP = '192.168.161.255' #dirección de broadcast
 TCP_PORT = 8000 #puerto de escucha del socket TCP
@@ -22,7 +26,7 @@ RECV_MSG = 'recv'
 
 #nodos referentes a otros servidores
 class NodeReference:
-  def __init__(self, ip: str, port: str):
+  def __init__(self, ip: str, port: int):
     self._id = set_id(ip)
     self._ip = ip
     self._port = port
@@ -31,14 +35,13 @@ class NodeReference:
   def _send_data(self, op: str, data=None) -> bytes:
     try:
       with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((self._ip, int(self._port)))
+        s.connect((self._ip, self._port))
         s.sendall(f'{op}|{data}'.encode('utf-8'))
         return s.recv(1024)
       
     except Exception as e:
       print(f"Error sending data: {e}")
       return b''
-  
   
   ############################ INTERACCIONES CON LA DB #######################################
   #registrar un usuario
@@ -66,7 +69,6 @@ class NodeReference:
     response = self._send_data(RECV_MSG, f'{id}|{name}|{number}|{msg}')
     return response
   ############################################################################################
-  
   
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
@@ -118,4 +120,21 @@ class BroadcastRef():
   def fix_finger(self):
     self._send_data(FIX_FINGER)
     
+  #notificar a todos los nodos de la caida de un nodo
+  def notify(self, id: str):
+    self._send_data(NOTIFY, id)
+    
+  #decirle a los nodos que actualicen su finger table debido a la caida de un nodo
+  def update_finger(self, id: str):
+    self._send_data(UPDATE_FINGER, id)
+    
+#enviar data a los servidores udp
+def send_data(op: str, ip: str, port: str, data=None):
+  try:
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+      s.sendto(f'{op}|{data}'.encode('utf-8'), (ip, port))
+    
+  except Exception as e:
+    print(f"Error sending data: {e}")
+    return b''
     

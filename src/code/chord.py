@@ -1,8 +1,8 @@
 #dependencias
 from src.code.db import DB
-from src.code.comunication import NodeReference, BroadcastRef 
+from src.code.comunication import NodeReference, BroadcastRef, send_data
 from src.code.comunication import REGISTER, LOGIN, ADD_CONTACT, SEND_MSG, RECV_MSG
-from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER, FIND_FIRST, REQUEST_DATA
+from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER, FIND_FIRST, REQUEST_DATA, CHECK_PREDECESOR, NOTIFY, UPDATE_PREDECESSOR, UPDATE_FINGER
 from src.code.db import DIR
 from src.code.handle_data import HandleData
 from src.utils import set_id, get_ip, create_folder
@@ -12,22 +12,25 @@ import time
 
 TCP_PORT = 8000 #puerto de escucha del socket TCP
 UDP_PORT = 8888 #puerto de escucha del socket UDP
+STABILIZE_PORT = 9000 #puerto de escucha del socket stabilize
 
 #server
 class Server:
   def __init__(self):
-    self._ip = get_ip()
-    self._id = set_id(self._ip)
-    self._tcp_port = TCP_PORT
-    self._udp_port = UDP_PORT
-    self._ref = NodeReference(self._ip, self._tcp_port)
-    self._broadcast = BroadcastRef()
-    self._handler = HandleData(self._id)
-    self._succ = self._ref
-    self._pred = None
-    self._finger = [self._ref] * 160
-    self._leader: bool
-    self._first: bool
+    self._ip = get_ip() #ip
+    self._id = set_id(self._ip) #id
+    self._tcp_port = TCP_PORT #puerto del socket tp
+    self._udp_port = UDP_PORT #puerto del socket udp
+    self._stabilize_port = STABILIZE_PORT #puerto del socket estabilizador
+    self._ref = NodeReference(self._ip, self._tcp_port) #referencia a mi mismo para la finger table
+    self._broadcast = BroadcastRef() #comunicacion por broadcast
+    self._handler = HandleData(self._id) #manejar la data de la db
+    self._succ = self._ref #inicialmente soy mi sucesor
+    self._pred = None #inicialmente no tengo predecessor
+    self._pred_info = 'not data' #data replicada por mi predecesor
+    self._finger = [self._ref] * 160 #finger table
+    self._leader: bool #saber si soy el lider
+    self._first: bool #saber si soy el primer nodo
     
     #hilos
     threading.Thread(target=self._start_broadcast_server).start()
@@ -35,6 +38,8 @@ class Server:
     threading.Thread(target=self._start_udp_server).start()
     threading.Thread(target=self._set_leader).start()
     threading.Thread(target=self._set_first).start()
+    threading.Thread(target=self.siblings).start()
+    threading.Thread(target=self._check_predecessor).start()
     
     #ejecutar al unirme a la red
     create_folder(f'{DIR}/db')
@@ -42,17 +47,6 @@ class Server:
     self._broadcast.fix_finger()
     self._request_data()
   
-  #enviar data a los servidores udp
-  def _send_data(self, op: str, ip: str, port: str, data=None):
-    try:
-      with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.sendto(f'{op}|{data}'.encode('utf-8'), (ip, port))
-      
-    except Exception as e:
-      print(f"Error sending data: {e}")
-      return b''
-    
-    
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
   def _join(self, ip: str, port: str):
@@ -89,7 +83,12 @@ class Server:
     while(True):
       self._leader = True if self._pred == None or self._succ.id < self.id else False
       time.sleep(5)
-    
+  
+  #imprimir informacion de tus adyacentes
+  def siblings(self):
+    while True:
+      print(f'pred: {self._pred.id if self._pred != None else None}, succ: {self._succ.id}') 
+   
   #actualizar la finger cuando entra un nodo
   def _fix_finger(self, node: NodeReference):
     for i in range(160):
@@ -125,8 +124,26 @@ class Server:
       response_pred = self._pred.request_data(self._id)
       self._handler.create(response_succ)
       self._handler.create(response_pred)
+      
+  def _check_predecessor(self):
+    while self._pred != None:
+      try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+          s.connect((self._pred.ip, STABILIZE_PORT))
+          s.settimeout(5)
+          s.sendall(CHECK_PREDECESOR.encode('utf-8'))
+          self._pred_info = s.recv(1024).decode()
+
+      except Exception as e:
+        print(e)
+        
+        if self._pred_info != 'not data':
+          self._handler.create(self._pred_info)
+          
+        self._broadcast.notify(self._pred.id)
+      
+      time.sleep(10)
   ############################################################################################ 
-  
   
   ############################## INTERACCIONES CON LA DB #####################################
   #registrar un usuario
@@ -243,13 +260,12 @@ class Server:
     return response
   ############################################################################################
   
-   
   ###################################### SOCKETS #############################################
   #iniciar server tcp
   def _start_tcp_server(self):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
       s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-      s.bind((self.ip, self._tcp_port))
+      s.bind((self._ip, self._tcp_port))
       print(f'Socket TCP binded to ({self._ip}, {self._tcp_port})')
       s.listen(10)
       
@@ -316,7 +332,7 @@ class Server:
           
         elif option == REQUEST_DATA:
           id = int(data[1])
-          data_resp = self._handler.data(id)
+          data_resp = self._handler.data(True, id)
           conn.sendall(data_resp)
               
         conn.close()
@@ -338,9 +354,9 @@ class Server:
         
         if option == JOIN:
           if addr[0] != self._ip and self._first:
-            self._send_data(CONFIRM_FIRST, addr[0], self._tcp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
+            send_data(CONFIRM_FIRST, addr[0], self._tcp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
             
-        if option == FIX_FINGER:
+        elif option == FIX_FINGER:
           if addr[0] != self._ip:
             ref = NodeReference(addr[0], TCP_PORT)
             self._fix_finger(ref)
@@ -348,7 +364,23 @@ class Server:
           else:
             if not self._leader:
               self._finger = [self._succ] * 160
-  
+              
+        elif option == NOTIFY:
+          if addr[0] != self._ip:
+            ip = data[1]
+            
+            if self._succ.ip == ip:
+              self._succ = NodeReference(addr[0], self._tcp_port)
+              send_data(UPDATE_PREDECESSOR, addr[0], UDP_PORT, f'{self._ip}|{self._tcp_port}')
+        
+        elif option == UPDATE_FINGER:
+          id = data[1]
+          sust = NodeReference(addr[0], TCP_PORT)
+          
+          for i in range(160):
+            if self._finger[i].id == id:
+              self._finger[i] = sust
+              
   #iniciar server udp
   def _start_udp_server(self):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -367,12 +399,39 @@ class Server:
           action = data[1]
           ip = data[2]
           port = data[3]   
-          first = NodeReference(ip, port)
+          first = NodeReference(ip, int(port))
           
           if action == JOIN:            
             data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
             self._pred = NodeReference(data_resp[0], data_resp[1])
             self._succ = NodeReference(data_resp[2], data_resp[3])
+        
+        elif option == UPDATE_PREDECESSOR:
+          ip = data[1]
+          port = int(data[2])
+          self._broadcast.update_finger(self._pred.id)
+          self._pred = NodeReference(ip, port)
+                  
+  #iniciar server stabilize
+  def _start_stabilize_server(self):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+      s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+      s.bind((self._ip, self._stabilize_port))
+      print(f'Socket stabilize binded to ({self._ip}, {self._tcp_port})')
+      s.listen(10)
+      
+      while True:
+        conn, addr = s.accept()
+        print(f'new connection from {addr}' )
+        data = conn.recv(1024).decode().split('|')
+        print(f'Recived data: {data}')
+        option = data[0]
+        
+        if option == CHECK_PREDECESOR:
+          data = self._handler.data(False)
+          conn.sendall(f'{data}'.encode() if data != '' else b'not data')
+          
+        conn.close()
   ############################################################################################
 
     
