@@ -31,7 +31,6 @@ class Server:
     self._finger = [self._ref] * 160 #finger table
     self._leader: bool #saber si soy el lider
     self._first: bool #saber si soy el primer nodo
-    self._ubicated = False
     
     #hilos
     threading.Thread(target=self._start_broadcast_server).start()
@@ -46,8 +45,9 @@ class Server:
     #ejecutar al unirme a la red
     create_folder(f'{DIR}/db')
     self._broadcast.join() 
-    time.sleep(2) #esperar 2 segundos entre el join y el fix finger
+    time.sleep(2) #esperar 2 segundos entre el 'join' y el 'fix finger'
     self._broadcast.fix_finger() 
+    time.sleep(2) #esperar 2 segundos entre el 'fix finger' y el 'request data'
     self._request_data()
   
   ############################### OPERACIONES CHORD ##########################################
@@ -128,7 +128,8 @@ class Server:
       response_pred = self._pred.request_data(self._id).decode()
       self._handler.create(response_succ)
       self._handler.create(response_pred)
-      
+   
+  #pedirle data a mi predecesor cada 5 segundos   
   def _check_predecessor(self):
     while True:
       if self._pred != None:
@@ -362,7 +363,6 @@ class Server:
             send_data(CONFIRM_FIRST, addr[0], self._udp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
             
         elif option == FIX_FINGER:
-          print('lets fix finger')
           if addr[0] != self._ip:
             ref = NodeReference(addr[0], TCP_PORT)
             self._fix_finger(ref)
@@ -377,6 +377,12 @@ class Server:
             if self._succ.ip == ip:
               self._succ = NodeReference(addr[0], self._tcp_port)
               send_data(UPDATE_PREDECESSOR, addr[0], UDP_PORT, f'{self._ip}|{self._tcp_port}')
+          
+          else:
+            if self._succ.ip == ip:
+              self._pred = None
+              self._succ = self._ref
+              self._finger = [self._ref] * 160
         
         elif option == UPDATE_FINGER:
           id = data[1]
@@ -410,7 +416,6 @@ class Server:
             data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
             self._pred = NodeReference(data_resp[0], int(data_resp[1]))
             self._succ = NodeReference(data_resp[2], int(data_resp[3]))
-            self._ubicated = True
         
         elif option == UPDATE_PREDECESSOR:
           ip = data[1]
