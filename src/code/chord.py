@@ -367,8 +367,7 @@ class Server:
             self._fix_finger(ref)
           
           else:
-            if not self._leader:
-              self._finger = [self._succ] * 160
+            self._finger = [self._succ] * 160
               
         elif option == NOTIFY:
           if addr[0] != self._ip:
