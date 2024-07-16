@@ -40,16 +40,13 @@ class Server:
     threading.Thread(target=self._start_stabilize_server).start()
     threading.Thread(target=self._set_leader).start()
     threading.Thread(target=self._set_first).start()
-    threading.Thread(target=self.siblings).start()
+    #threading.Thread(target=self.siblings).start()
     threading.Thread(target=self._check_predecessor).start()
     
     #ejecutar al unirme a la red
     create_folder(f'{DIR}/db')
     self._broadcast.join() 
-    
-    while not self._ubicated:
-      continue
-    
+    time.sleep(2) #esperar 2 segundos entre el join y el fix finger
     self._broadcast.fix_finger() 
     self._request_data()
   
