@@ -31,6 +31,7 @@ class Server:
     self._finger = [self._ref] * 160 #finger table
     self._leader: bool #saber si soy el lider
     self._first: bool #saber si soy el primer nodo
+    self._ubicated = False
     
     #hilos
     threading.Thread(target=self._start_broadcast_server).start()
@@ -45,9 +46,11 @@ class Server:
     #ejecutar al unirme a la red
     create_folder(f'{DIR}/db')
     self._broadcast.join() 
-    time.sleep(1)
-    self._broadcast.fix_finger()
-    time.sleep(1)
+    
+    while not self._ubicated:
+      continue
+    
+    self._broadcast.fix_finger() 
     self._request_data()
   
   ############################### OPERACIONES CHORD ##########################################
@@ -79,19 +82,18 @@ class Server:
   def _set_first(self):
     while(True):
       self._first = True if self._pred == None or self._pred.id > self._id else False
-      time.sleep(5)
     
   #saber si soy el nodo de mayor id
   def _set_leader(self):
     while(True):
       self._leader = True if self._pred == None or self._succ.id < self._id else False
-      time.sleep(5)
   
   #imprimir informacion de tus adyacentes
   def siblings(self):
     while True:
       print(f'pred: {self._pred.id if self._pred != None else None}, succ: {self._succ.id}') 
       print([x.id for x in self._finger[1: 3]])
+      print(f'ubicated: {self._ubicated}')
       time.sleep(5)
    
   #actualizar la finger cuando entra un nodo
@@ -131,23 +133,24 @@ class Server:
       self._handler.create(response_pred)
       
   def _check_predecessor(self):
-    while self._pred != None:
-      try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-          s.connect((self._pred.ip, STABILIZE_PORT))
-          s.settimeout(5)
-          s.sendall(CHECK_PREDECESOR.encode('utf-8'))
-          self._pred_info = s.recv(1024).decode()
+    while True:
+      if self._pred != None:
+        try:
+          with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((self._pred.ip, STABILIZE_PORT))
+            s.settimeout(5)
+            s.sendall(CHECK_PREDECESOR.encode('utf-8'))
+            self._pred_info = s.recv(1024).decode()
 
-      except Exception as e:
-        print(e)
-        
-        if self._pred_info != 'not data':
-          self._handler.create(self._pred_info)
-          
-        self._broadcast.notify(self._pred.id)
+        except Exception as e:
+          print(e)
+
+          if self._pred_info != 'not data':
+            self._handler.create(self._pred_info)
+
+          self._broadcast.notify(self._pred.id)
       
-      time.sleep(10)
+        time.sleep(10)
   ############################################################################################ 
   
   ############################## INTERACCIONES CON LA DB #####################################
@@ -362,6 +365,7 @@ class Server:
             send_data(CONFIRM_FIRST, addr[0], self._udp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
             
         elif option == FIX_FINGER:
+          print('lets fix finger')
           if addr[0] != self._ip:
             ref = NodeReference(addr[0], TCP_PORT)
             self._fix_finger(ref)
@@ -407,9 +411,9 @@ class Server:
           
           if action == JOIN:            
             data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
-            print(data_resp)
             self._pred = NodeReference(data_resp[0], int(data_resp[1]))
             self._succ = NodeReference(data_resp[2], int(data_resp[3]))
+            self._ubicated = True
         
         elif option == UPDATE_PREDECESSOR:
           ip = data[1]
