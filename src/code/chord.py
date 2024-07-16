@@ -107,7 +107,7 @@ class Server:
   #escoger el nodo mas cercano en la busqueda logaritmica
   def _closest_preceding_finger(self, id: int) -> NodeReference:
     for i in range(160):
-      if self._finger[i] > id:
+      if self._finger[i].id > id:
         if i == 0:
           return self._finger[i]
         
@@ -238,7 +238,7 @@ class Server:
       print(response)
       return response.encode()
     
-    response = self._closest_preceding_finger(id).send_msg(id, name, number)
+    response = self._closest_preceding_finger(id).send_msg(id, name, number, msg)
     print(response)
     return response
   
@@ -261,7 +261,7 @@ class Server:
       print(response)
       return response.encode()
     
-    response = self._closest_preceding_finger(id).recv_msg(id, name, number)
+    response = self._closest_preceding_finger(id).recv_msg(id, name, number, msg)
     print(response)
     return response
   ############################################################################################
