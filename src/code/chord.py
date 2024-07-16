@@ -355,7 +355,10 @@ class Server:
         data_recv = s.recvfrom(1024)
         data = data_recv[0].decode().split('|')
         addr = data_recv[1]
-        print(f'Recived data: {data} from {addr[0]}')
+        
+        if self._ip != addr[0]:
+          print(f'Recived data: {data} from {addr[0]}')
+          
         option = data[0]
         
         if option == JOIN:
