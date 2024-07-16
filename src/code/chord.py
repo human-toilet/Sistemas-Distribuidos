@@ -50,25 +50,25 @@ class Server:
   
   ############################### OPERACIONES CHORD ##########################################
   #unir un nodo a la red
-  def _join(self, ip: str, port: str):
+  def _join(self, ip: str, port: str) -> bytes:
     id = set_id(ip)
     
-    if id < self._id:
-      if self._pred == None:
-        response = f'{self._ip}|{self._tcp_port}|{self._ip}|{self._tcp_port}'
-        self._pred = NodeReference(ip, port)
-        self._succ = NodeReference(ip, port)
-        return response
+    if self._pred == None:
+      response = f'{self._ip}|{self._tcp_port}|{self._ip}|{self._tcp_port}'
+      self._pred = NodeReference(ip, port)
+      self._succ = NodeReference(ip, port)
+      return response.encode()
       
+    elif id < self._id:
       response = f'{self._pred.ip}|{self._pred.port}|{self._ip}|{self._tcp_port}'
       self._pred = NodeReference(ip, port)
-      return response
+      return response.encode()
     
     else:
       if self._leader:
-        response = f'{self._id}|{self._ip}|{self._tcp_port}|{self._succ.id}|{self._succ.ip}|{self._succ.port}'
+        response = f'{self._ip}|{self._tcp_port}|{self._succ.ip}|{self._succ.port}'
         self._succ = NodeReference(ip, port)
-        return response
+        return response.encode()
   
       response = self._succ.join(ip, port)
       return response 
@@ -327,7 +327,7 @@ class Server:
           if data_resp[0] == self._ip and data_resp[1] == self._tcp_port:
             self._succ = NodeReference(ip, id)
             
-          elif data_resp[2] == self._ip and data_resp[3] == self._tcp_port:
+          if data_resp[2] == self._ip and data_resp[3] == self._tcp_port:
             self._pred = NodeReference(ip, id)
           
           conn.sendall(data_resp)
@@ -356,7 +356,7 @@ class Server:
         
         if option == JOIN:
           if addr[0] != self._ip and self._first:
-            send_data(CONFIRM_FIRST, addr[0], self._tcp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
+            send_data(CONFIRM_FIRST, addr[0], self._udp_port, f'{JOIN}|{self._ip}|{self._tcp_port}')
             
         elif option == FIX_FINGER:
           if addr[0] != self._ip:
