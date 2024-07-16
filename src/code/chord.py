@@ -76,13 +76,13 @@ class Server:
   #saber si soy el nodo de menor id
   def _set_first(self):
     while(True):
-      self._first = True if self._pred == None or self._pred.id > self.id else False
+      self._first = True if self._pred == None or self._pred.id > self._id else False
       time.sleep(5)
     
   #saber si soy el nodo de mayor id
   def _set_leader(self):
     while(True):
-      self._leader = True if self._pred == None or self._succ.id < self.id else False
+      self._leader = True if self._pred == None or self._succ.id < self._id else False
       time.sleep(5)
   
   #imprimir informacion de tus adyacentes
