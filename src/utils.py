@@ -21,10 +21,12 @@ def get_ip() -> str:
         
     return str(ip_local)
 
-#crear una carpeta en caso de que no exista
+#resetear una carpeta
 def create_folder(path: str):
-  if not os.path.exists(path):
-    os.makedirs(path)
+  if os.path.exists(path):
+    rem_dir(path)
+    
+  os.makedirs(path)
 
 #borrar folder
 def rem_dir(dir: str):
