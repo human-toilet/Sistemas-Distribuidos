@@ -10,7 +10,7 @@ class HandleData():
     self._id = id
    
   #devolver data correspondiente a un usuario segun su id 
-  def data(self, delete: bool, id: None) -> str:
+  def data(self, delete: bool, id=None) -> str:
     result = ''
     
     for user in os.listdir(f'{DIR}/db'):
