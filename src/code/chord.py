@@ -76,7 +76,7 @@ class Server:
       return response 
   
   #saber si soy el nodo de menor id
-  def _set_first(self):
+  def _set_first(self) -> bytes:
     while(True):
       self._first = True if self._pred == None or self._pred.id > self._id else False
     
@@ -116,7 +116,7 @@ class Server:
   #encontrar el nodo 'first'
   def _find_first(self):
     if self._first:
-      return f'{self._ip}|{self._tcp_port}'
+      return f'{self._ip}|{self._tcp_port}'.encode()
     
     response = self._succ.find_first()
     return response
@@ -156,7 +156,7 @@ class Server:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
-      port = data_first[1]
+      port = int(data_first[1])
       first = NodeReference(ip, port)
       return first.register(id, name, number).decode()
     
@@ -178,7 +178,7 @@ class Server:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
-      port = data_first[1]
+      port = int(data_first[1])
       first = NodeReference(ip, port)
       return first.login(id, name, number).decode()
     
@@ -201,7 +201,7 @@ class Server:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
-      port = data_first[1]
+      port = int(data_first[1])
       first = NodeReference(ip, port)
       return first.add_contact(id, name, number).decode()
     
@@ -223,7 +223,7 @@ class Server:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
-      port = data_first[1]
+      port = int(data_first[1])
       first = NodeReference(ip, port)
       return first.send_msg(id, name, number, msg).decode()
     
@@ -246,7 +246,7 @@ class Server:
     if not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
-      port = data_first[1]
+      port = int(data_first[1])
       first = NodeReference(ip, port)
       return first.recv_msg(id, name, number, msg).decode()
     
@@ -276,7 +276,7 @@ class Server:
       
       while True:
         conn, addr = s.accept()
-        print(f'new connection from {addr}' )
+        print(f'new connection in TCP from {addr}' )
         data = conn.recv(1024).decode().split('|')
         print(f'Recived data: {data}')
         option = data[0]
@@ -397,7 +397,7 @@ class Server:
         data_recv = s.recvfrom(1024)
         data = data_recv[0].decode().split('|')
         addr = data_recv[1]
-        print(f'Recived data: {data} from {addr[0]}')
+        print(f'Recived data in UDP socket: {data} from {addr[0]}')
         option = data[0]
         
         if option == CONFIRM_FIRST:
@@ -428,7 +428,7 @@ class Server:
       
       while True:
         conn, addr = s.accept()
-        print(f'new connection from {addr}' )
+        print(f'new connection in stabilize from {addr}' )
         data = conn.recv(1024).decode().split('|')
         print(f'Recived data: {data}')
         option = data[0]
