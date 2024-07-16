@@ -36,6 +36,7 @@ class Server:
     threading.Thread(target=self._start_broadcast_server).start()
     threading.Thread(target=self._start_tcp_server).start()
     threading.Thread(target=self._start_udp_server).start()
+    threading.Thread(target=self._start_stabilize_server).start()
     threading.Thread(target=self._set_leader).start()
     threading.Thread(target=self._set_first).start()
     threading.Thread(target=self.siblings).start()
@@ -88,6 +89,7 @@ class Server:
   def siblings(self):
     while True:
       print(f'pred: {self._pred.id if self._pred != None else None}, succ: {self._succ.id}') 
+      time.sleep(5)
    
   #actualizar la finger cuando entra un nodo
   def _fix_finger(self, node: NodeReference):
@@ -417,7 +419,7 @@ class Server:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
       s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
       s.bind((self._ip, self._stabilize_port))
-      print(f'Socket stabilize binded to ({self._ip}, {self._tcp_port})')
+      print(f'Socket stabilize binded to ({self._ip}, {self._stabilize_port})')
       s.listen(10)
       
       while True:
