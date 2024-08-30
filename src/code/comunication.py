@@ -12,9 +12,11 @@ CHECK_PREDECESOR = 'check_pred'
 NOTIFY = 'notf'
 UPDATE_PREDECESSOR = 'upt_pred'
 UPDATE_FINGER = 'upd_fin'
+UPDATE_JOIN = 'upd_join'
+DATA_PRED = 'dat_prd'
+FALL_SUCC = 'fl_suc'
 
-BROADCAST_IP = '192.168.161.255' #dirección de broadcast
-TCP_PORT = 8000 #puerto de escucha del socket TCP
+BROADCAST_IP = '255.255.255.255' #dirección de broadcast
 UDP_PORT = 8888 #puerto de escucha del socket UDP
 
 #operadores database
@@ -23,6 +25,7 @@ LOGIN = 'log'
 ADD_CONTACT = 'add_cnt'
 SEND_MSG = 'send'
 RECV_MSG = 'recv'
+GET = 'get'
 
 #nodos referentes a otros servidores
 class NodeReference:
@@ -67,6 +70,11 @@ class NodeReference:
   #un usuario recibe un sms
   def recv_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
     response = self._send_data(RECV_MSG, f'{id}|{name}|{number}|{msg}')
+    return response
+  
+  #operaaciones get
+  def get(self, id: int, endpoint: str) -> bytes:
+    response = self._send_data(GET, f'{id}|{endpoint}')
     return response
   ############################################################################################
   
@@ -125,11 +133,11 @@ class BroadcastRef():
     self._send_data(NOTIFY, id)
     
   #decirle a los nodos que actualicen su finger table debido a la caida de un nodo
-  def update_finger(self, id: str):
+  def update_finger(self, id: int):
     self._send_data(UPDATE_FINGER, id)
     
 #enviar data a los servidores udp
-def send_data(op: str, ip: str, port: str, data=None):
+def send_data(op: str, ip: str, port: int, data=None):
   try:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
       s.sendto(f'{op}|{data}'.encode('utf-8'), (ip, port))
