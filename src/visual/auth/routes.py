@@ -16,11 +16,9 @@ def login():
     response = server.login(set_id(f'{username} - {number}'), username, int(number))
     
     if response == 'User not registred':
-      flash(response)
       return render_template('login.html', **context)
     
-    return redirect(url_for('auth.homepage', data=response, id=set_id(f'{username} - {number}'),
-                            my_name=username, my_number=number))
+    return redirect(url_for('auth.homepage', id=set_id(f'{username} - {number}'), my_name=username, my_number=number))
   
   return render_template('login.html', **context)
   
@@ -39,8 +37,7 @@ def register():
       flash(response)
       return render_template('register.html', **context)
     
-    return redirect(url_for('auth.homepage', data='', id=set_id(f'{username} - {number}'),
-                            my_name=username, my_number=number))
+    return redirect(url_for('auth.homepage', id=set_id(f'{username} - {number}'), my_name=username, my_number=number))
   
   return render_template('register.html', **context)
 
@@ -50,11 +47,10 @@ def homepage():
   id = int(request.args.get('id'))
   my_name = request.args.get('my_name')
   my_number = request.args.get('my_number')
-  data = request.args.get('data')
+  data = server.get(id, 'contacts')
   parse_data = data.split('\n')
   context = {
     'contacts': parse_data if not '' in parse_data else [],
-    'no_parse_contacts': data,
     'id': id,
     'my_name': my_name,
     'my_number': my_number} 
@@ -66,14 +62,12 @@ def add_contact():
   id = int(request.args.get('id'))
   my_name = request.args.get('my_name')
   my_number = request.args.get('my_number')
-  data = request.args.get('data')
   form = AddContact()
   context = {
     'form': form,
     'id': id,
     'my_name': my_name, 
-    'my_number': my_number,
-    'data': data
+    'my_number': my_number
     }
   
   if form.validate_on_submit():
@@ -83,10 +77,9 @@ def add_contact():
     response = server.add_contact(id, username, int(number))
   
     if response == 'Contact already exists':
-      flash(response)
       return render_template('add_contact.html', **context)
     
-    return redirect(url_for('auth.homepage', data=response, id=id, my_name=my_name, my_number=my_number))
+    return redirect(url_for('auth.homepage', id=id, my_name=my_name, my_number=my_number))
   
   return render_template('add_contact.html', **context)
 
@@ -98,14 +91,14 @@ def chat():
   id = int(request.args.get('id'))
   my_name = request.args.get('my_name')
   my_number = request.args.get('my_number')
-  data = request.args.get('data')
-  chat_state = server.send_msg(id, name, int(number), '')
+  chat_state = server.get(id, f'{name} - {number}')
   form = SendMSG()
   
   if form.validate_on_submit():
     msg = form.text.data
-    chat_state = server.send_msg(id, name, int(number), msg)
+    server.send_msg(id, name, int(number), msg)
     server.recv_msg(set_id(f'{name} - {number}'), my_name, int(my_number), msg)
+    return redirect(url_for('auth.homepage', id=id, my_name=my_name, my_number=my_number))
     
   context = {
     'form': form,
@@ -113,10 +106,7 @@ def chat():
     'name': name,
     'state': chat_state.split('\n'),
     'my_name': my_name, 
-    'my_number': my_number,
-    'data': data
+    'my_number': my_number
     }
-    
   return render_template('chat.html', **context)
-  
-  
+ 

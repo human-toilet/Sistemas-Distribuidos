@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="{{url_for('static', filename='styles/register.css')}}"/>
 {%endblock%}
 {%block content%}  
-  <a class="back_button" href="{{url_for('auth.homepage', id=id, my_name=my_name, my_number=my_number, data=data)}}">back</a>
+  <a class="back_button" href="{{url_for('auth.homepage', id=id, my_name=my_name, my_number=my_number)}}">back</a>
   <div class="container_principal">
     <form class="form_register" method="POST">
       {{form.hidden_tag()}}

@@ -5,8 +5,8 @@ import shutil
 import socket
 
 #hashear la data
-def set_id(data: str):
-  return int(hashlib.sha1(data.encode()).hexdigest(), 16)
+def set_id(data: str) -> int:
+  return int(hashlib.sha1(data.encode()).hexdigest(), 16) % (2 ** 160)
 
 #optener mi ip
 def get_ip() -> str:
