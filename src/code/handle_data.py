@@ -23,7 +23,7 @@ class HandleData():
   
         result += '|'
         self._garbage.append(f'{DIR}/db/{user}')
-      
+
     self._clean(delete)
     return result
   
@@ -32,7 +32,7 @@ class HandleData():
     users = data.split('|')
     
     for user in users:
-      if user != '':
+      if user != '' or '/' in users:
         parse = user.split('/')
         create_folder(f'{DIR}/db/{parse[0]}')
         chats = parse[1:]
