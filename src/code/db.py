@@ -26,15 +26,14 @@ class DB:
     with open(f'{DIR}/db/{name} - {number}/contacts.txt', 'w') as f:
       f.write('')
       
-    return 'Succesful registration'
+    return f'Succesfully registrated user: {name}'
     
   #logear un usuario
   @classmethod
   def login(cls, name: str, number: int) -> str:
     #verificar si esta en la db
     if os.path.exists(f'{DIR}/db/{name} - {number}'):
-      with open(f'{DIR}/db/{name} - {number}/contacts.txt', 'r') as f:
-        return f.read().strip()
+      return f'Succesful login user: {name}'
     
     return 'User not registred'
 
@@ -51,9 +50,11 @@ class DB:
       
     with open(f'{user}/contacts.txt', 'a') as f:
       f.write(f'{name} - {number}\n')
+      
+    with open(f'{user}/{name} - {number}.txt', 'w') as f:
+      f.write('')
     
-    with open(f'{user}/contacts.txt', 'r') as f:
-      return f.read().strip()
+    return f'Succesfully added contact: {name} - {number}'
    
   #enviar un sms   
   @classmethod
@@ -64,8 +65,7 @@ class DB:
     with open(f'{user}/{endpoint}.txt', 'a') as f:
       f.write(f'[YOU]: {msg}\n' if msg.strip() != '' else '')   
       
-    with open(f'{user}/{endpoint}.txt', 'r') as f:
-      return f.read().strip() 
+    return f'Message sent: {msg}' 
   
   #recibir un sms
   @classmethod
@@ -77,11 +77,14 @@ class DB:
     
     with open(f'{user}/{endpoint}.txt', 'a') as f:
       f.write(f'[{name}]: {msg}\n')   
-      
-    with open(f'{user}/{endpoint}.txt', 'r') as f:
-      return f.read() 
-  
-  
-      
     
+    return f'Message recivied: {msg}'
   
+  #get 
+  @classmethod
+  def get(cls, id: int, endpoint: str) -> str:
+    #referenciar el usuario segun el id
+    user = find_user(id)
+    
+    with open(f'{user}/{endpoint}.txt', 'r') as f:
+      return f.read().strip()
