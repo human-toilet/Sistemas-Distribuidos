@@ -69,15 +69,14 @@ class Server:
       self._pred = NodeReference(ip, port)
       return response.encode()
     
-    else:
-      if self._leader:
+    elif self._leader:
         response = f'{self._ip}|{self._tcp_port}|{self._succ.ip}|{self._succ.port}'
         send_data(UPDATE_JOIN, self._succ.ip, self._udp_port, f'{ip}|{port}')
         self._succ = NodeReference(ip, port)
         return response.encode()
   
-      response = self._succ.join(ip, port)
-      return response 
+    response = self._closest_preceding_finger(id).join(ip, port)
+    return response 
   
   #saber si soy el nodo de menor id
   def _set_first(self) -> bytes:
@@ -93,7 +92,8 @@ class Server:
   def _info(self):
     while True:
       time.sleep(10)
-      print(f'pred: {self._pred.id if self._pred != None else None}, succ: {self._succ.id}') 
+      print(f'my ip: {self._ip}')
+      print(f'pred: {self._pred.ip if self._pred != None else None}, succ: {self._succ.ip}') 
       print(f'{"first" if self._first else "not first"}, {"leader" if self._leader else "not leader"}')
    
   #actualizar la finger cuando entra un nodo
@@ -117,7 +117,7 @@ class Server:
         return self._finger[i - 1]
   
   #encontrar el nodo 'first'
-  def _find_first(self):
+  def _find_first(self) -> bytes:
     if self._leader:
       return f'{self._succ.ip}|{self._succ.port}'.encode()
     
@@ -176,7 +176,7 @@ class Server:
   ############################## INTERACCIONES CON LA DB #####################################
   #registrar un usuario
   def register(self, id: int, name: str, number: int) -> str:
-    if not self._first:
+    if id < self._id and not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
       port = int(data_first[1])
@@ -198,7 +198,7 @@ class Server:
   
   #logear a un usuario
   def login(self, id: int, name: str, number: int) -> str:
-    if not self._first:
+    if id < self._id and not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
       port = int(data_first[1])
@@ -221,7 +221,7 @@ class Server:
   
   #un usuario agreaga un contacto
   def add_contact(self, id: int, name: str, number: int) -> str:
-    if not self._first:
+    if id < self._id and not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
       port = int(data_first[1])
@@ -243,7 +243,7 @@ class Server:
   
   #un usuario envia un sms
   def send_msg(self, id: int, name: str, number: int, msg: str) -> str:
-    if not self._first:
+    if id < self._id and not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
       port = int(data_first[1])
@@ -266,7 +266,7 @@ class Server:
   
   #un usuario recibe un sms
   def recv_msg(self, id: int, name: str, number: int, msg: str) -> str:
-    if not self._first:
+    if id < self._id and not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
       port = int(data_first[1])
@@ -289,7 +289,7 @@ class Server:
   
   #operaciones get
   def get(self, id: int, endpoint: str) -> str:
-    if not self._first:
+    if id < self._id and not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
       port = int(data_first[1])
