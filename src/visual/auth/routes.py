@@ -73,7 +73,6 @@ def add_contact():
   if form.validate_on_submit():
     username = form.name.data
     number = form.number.data
-    server.register(set_id(f'{username} - {number}'), username, int(number))
     response = server.add_contact(id, username, int(number))
   
     if response == 'Contact already exists':
@@ -109,4 +108,3 @@ def chat():
     'my_number': my_number
     }
   return render_template('chat.html', **context)
- 
