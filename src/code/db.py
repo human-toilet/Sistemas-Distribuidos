@@ -70,15 +70,18 @@ class DB:
   #recibir un sms
   @classmethod
   def recv_msg(cls, id: int, name: str, number: str, msg: str) -> str:
-    #agregar el contacto si no esta
-    cls.add_contact(id, name, number)
     user = find_user(id)
-    endpoint = f'{name} - {number}'
     
-    with open(f'{user}/{endpoint}.txt', 'a') as f:
-      f.write(f'[{name}]: {msg}\n')   
+    if user != None:
+      cls.add_contact(id, name, number)
+      endpoint = f'{name} - {number}'
     
-    return f'Message recivied: {msg}'
+      with open(f'{user}/{endpoint}.txt', 'a') as f:
+        f.write(f'[{name}]: {msg}\n')   
+
+      return f'Message recivied: {msg}'
+    
+    return 'User not registred'
   
   #get 
   @classmethod
