@@ -213,7 +213,7 @@ class Server:
   #actualizar la "finger table" constantemente
   def _handle_update_finger(self):
     while True:
-      ip, port, id = self._fix_finger_queue.get()
+      ip, port, id = self._update_finger_queue.get()
       
       try:
         #actualizar la "finger table" siempre que haya data
@@ -378,7 +378,7 @@ class Server:
   ################################### HANDLING SOCKETS #######################################
   #manejar varias peticiones en el socket TCP
   def _handle_client_tcp(self, conn: socket, addr: tuple):
-    print(f'new connection in TCP from {addr}' )
+    print(f'new connection in TCP from {addr[0]}' )
     data = conn.recv(1024).decode().split('|')
     print(f'Recived data: {data}')
     option = data[0]
@@ -425,7 +425,7 @@ class Server:
 
     elif option == JOIN:
       ip = data[1]
-      port = data[2]
+      port = int(data[2])
       data_resp = self._join(ip, port)
 
     elif option == REQUEST_DATA:
@@ -433,7 +433,7 @@ class Server:
       data_resp = self._handler.data(True, id).encode()
        
     elif option == CHECK_PREDECESOR:
-      data_resp = self._handler.data(False) + self._pred.ip
+      data_resp = (self._handler.data(False) + self._pred.ip).encode()
       
       #si somos al menos 3 nodos, le mando a mi sucesor la data de mi predecesor
       if self._pred.id != self._succ.id:
