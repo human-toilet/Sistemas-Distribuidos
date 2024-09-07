@@ -29,7 +29,7 @@ class HandleData():
   
   #crear data en la db
   def create(self, data: str):
-    users = data.split('|')
+    users = data.split('|')[:-1]
     
     for user in users:
       if user != '' or '/' in users:
