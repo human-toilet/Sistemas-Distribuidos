@@ -1,7 +1,7 @@
 #dependencias
 from flask import redirect, url_for, render_template, flash, request
 from src.visual.auth import auth, server
-from src.visual.auth.forms import *
+from src.visual.auth.forms import Register, Login, AddContact, SendMSG
 from src.utils import set_id
 
 #ruta del logear un usuario
