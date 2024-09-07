@@ -14,7 +14,7 @@ UPDATE_PREDECESSOR = 'upt_pred'
 UPDATE_FINGER = 'upd_fin'
 UPDATE_SUCC = 'upd_suc'
 DATA_PRED = 'dat_prd'
-FALL_SUCC = 'fl_suc'
+FALL_SUCC = 'fal_suc'
 
 BROADCAST_IP = '255.255.255.255' #dirección de broadcast
 UDP_PORT = 8888 #puerto de escucha del socket UDP

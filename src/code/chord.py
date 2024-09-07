@@ -51,7 +51,7 @@ class Server:
     time.sleep(2) #esperar 2 segundos entre el 'join' y el 'fix finger'
     self._broadcast.fix_finger() 
     time.sleep(2) #esperar 2 segundos entre el 'fix finger' y el 'request data'
-    self._request_data()
+    self._request_data(pred=True) if self._id > self._succ.id else self._request_data(succ=True)
     print('Ready for use')
   
   ############################### OPERACIONES CHORD ##########################################
