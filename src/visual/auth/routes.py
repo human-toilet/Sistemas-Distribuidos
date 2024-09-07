@@ -11,7 +11,7 @@ def login():
   context = {'form': form}
   
   if form.validate_on_submit():
-    username = form.username.data
+    username = form.username.data.strip()
     number = form.number.data
     response = server.login(set_id(f'{username} - {number}'), username, int(number))
     
@@ -29,7 +29,7 @@ def register():
   context = {'form': form}
   
   if form.validate_on_submit():
-    username = form.username.data
+    username = form.username.data.strip()
     number = form.number.data
     response = server.register(set_id(f'{username} - {number}'), username, int(number))
   
@@ -71,7 +71,7 @@ def add_contact():
     }
   
   if form.validate_on_submit():
-    username = form.name.data
+    username = form.name.data.strip()
     number = form.number.data
     response = server.add_contact(id, username, int(number))
   
@@ -94,7 +94,7 @@ def chat():
   form = SendMSG()
   
   if form.validate_on_submit():
-    msg = form.text.data
+    msg = form.text.data.strip()
     server.send_msg(id, name, int(number), msg)
     server.recv_msg(set_id(f'{name} - {number}'), my_name, int(my_number), msg)
     return redirect(url_for('auth.homepage', id=id, my_name=my_name, my_number=my_number))
