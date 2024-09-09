@@ -33,6 +33,8 @@ class Server:
     self._first: bool #saber si soy el primer nodo
     self._fix_finger_queue = queue.Queue() #cola de mensajes para arreglar la "finger table"
     self._update_finger_queue = queue.Queue() #cola de mensajes para actualizar la "finger table"
+    self._joined = False
+    self._confirm_join = False
     
     #hilos
     threading.Thread(target=self._start_broadcast_server).start()
@@ -45,13 +47,25 @@ class Server:
     threading.Thread(target=self._handle_fix_finger).start()
     threading.Thread(target=self._handle_update_finger).start()
     
-    #ejecutar al unirme a la red
+    #crear la carpeta de la base de datos
     create_folder(f'{DIR}/db')
-    self._broadcast.join() 
-    time.sleep(2) #esperar 2 segundos entre el 'join' y el 'fix finger'
+    
+    while True:
+      self._broadcast.join() 
+      time.sleep(4)
+      
+      #si despues de 4 segundos no estoy ubicado, trato de volver a unirme
+      if self._joined:
+        break
+    
+    #luego de unirme, notifico a los nodos que me uni para que actualicen su "finger table"
     self._broadcast.fix_finger() 
-    time.sleep(2) #esperar 2 segundos entre el 'fix finger' y el 'request data'
-    self._request_data(pred=True) if self._id > self._succ.id else self._request_data(succ=True)
+    
+    #si no estoy solo, trato de alivianar a mi server adyacente
+    if self._pred != None:
+      self._request_data(pred=True) if self._id > self._succ.id else self._request_data(succ=True)
+    
+    #el server ya esta configurado 
     print('Ready for use')
   
   ############################### OPERACIONES CHORD ##########################################
@@ -75,13 +89,13 @@ class Server:
     
     #si eres mayor que yo pero yo soy el "lider", entonces estas entre el "first" y yo
     elif self._leader:
-        response = f'{self._ip}|{self._tcp_port}|{self._succ.ip}|{self._succ.port}'
-        send_data(UPDATE_PREDECESSOR, self._succ.ip, self._udp_port, f'{ip}|{port}')
-        self._succ = NodeReference(ip, port)
-        return response.encode()
+      response = f'{self._ip}|{self._tcp_port}|{self._succ.ip}|{self._succ.port}'
+      send_data(UPDATE_PREDECESSOR, self._succ.ip, self._udp_port, f'{ip}|{port}')
+      self._succ = NodeReference(ip, port)
+      return response.encode()
 
-    #acotamos x debajo y le dejamos la tarea al siguiente nodo
-    response = self._closest_preceding_finger(id).join(ip, port)
+    #le dejamos la tarea a nuestro sucesor
+    response = self._succ.join(ip, port)
     return response 
   
   #saber si soy el nodo de menor id
@@ -98,9 +112,7 @@ class Server:
   def _info(self):
     while True:
       time.sleep(10)
-      print(f'my ip: {self._ip}')
-      print(f'pred: {self._pred.ip if self._pred != None else None}, succ: {self._succ.ip}') 
-      print(f'{"first" if self._first else "not first"}, {"leader" if self._leader else "not leader"}')
+      print(f'my ip: {self._ip}\npred: {self._pred.ip if self._pred != None else None}, succ: {self._succ.ip}\n{"first" if self._first else "not first"}, {"leader" if self._leader else "not leader"}')
    
   #actualizar la finger cuando entra un nodo
   def _fix_finger(self, node: NodeReference, id=None):
@@ -161,7 +173,7 @@ class Server:
 
         except:
           #al no recibir respuesta, intuimos que se cayo y procedemos a guardar la data que nos envio
-          print(f'Socket ({self._pred.ip}, {self._pred.port}) disconnected')
+          print(f'Server {self._pred.ip} disconnected')
           self._handler.create(self._pred_info)
           #le comunicamos al resto que se cayo el predecesor y pedimos que actuailice:
           #si somos el "first", significa que se cayo el lider, y se deben actualizar las "finger tables" con el predecesor del lider
@@ -181,14 +193,20 @@ class Server:
 
             except:
               #en este punto, el predecesor de nuestro predecesor tambien se cayo, por lo que tambien salvamos sus datos
-              print(f'Socket {ip_pred_pred} disconnected too')
+              print(f'Server {ip_pred_pred} disconnected too')
               self._handler.create(self._pred_pred)
 
               #si al menos somos 4, pregunto quien es el sucesor del nodo caid
               if ip_pred_pred != self._succ.ip:
                 self._broadcast.notify(set_id(ip_pred_pred))
+            
+              #eramos 3 nodos, por lo que al caerse 2, nos quedamos solos, por lo que toca resetearnos
+              else:
+                self._pred = None
+                self._succ = self._ref
+                self._finger = [self._ref] * 160
 
-          #eramos 2 nodos, por lo que al caerse 2, nos quedamos solos, por lo que toca resetearnos
+          #eramos 2 nodos, por lo que al caerse 1, nos quedamos solos, por lo que toca resetearnos
           else:
             self._pred = None
             self._succ = self._ref
@@ -455,15 +473,20 @@ class Server:
     data = data_recv[0].decode().split('|')
     addr = data_recv[1]
     option = data[0]
-
-    if self._ip != addr[0]:
-      print(f'Recived data: {data} from {addr[0]}')
+    print(f'Recived data by broadcast: {data} from {addr[0] if self._ip != addr[0] else "myself"}')
 
     if option == JOIN:
       #si alguien se unio, le digo que somos el "first", para unirlo posteriormente
       if addr[0] != self._ip and self._first:
         send_data(CONFIRM_FIRST, addr[0], self._udp_port, f'{self._ip}|{self._tcp_port}')
-
+      
+      #si nadie me responde en 3 segundos, significa que estoy solo y termino el proceso de join
+      else:
+        time.sleep(2)
+        
+        if not self._confirm_join:
+          self._joined = True
+        
     elif option == FIX_FINGER:
       if addr[0] != self._ip:
         #si tenemos menor id que el nodo que se unio, ponemos en la cola su id  para actualizar nuestra "finger table"
@@ -487,13 +510,6 @@ class Server:
           #en caso contrario, que actualicen con el nodo notificante
           self._broadcast.update_finger(id, self._ip if self._id > set_id(addr[0]) else addr[0], TCP_PORT)
 
-      else:
-        #si el nodo caido resulta ser mi sucesor, significa que eramos 3, por lo que me quedo solo y me reinicio
-        if self._succ.id == id:
-          self._pred = None
-          self._succ = self._ref
-          self._finger = [self._ref] * 160
-
     elif option == UPDATE_FINGER:
       id = int(data[1])
       ip = data[2]
@@ -512,13 +528,22 @@ class Server:
     
     #al recibir la confirmacion del nodo "first", le solicito la union al anillo
     if option == CONFIRM_FIRST:
+      self._confirm_join = True
       ip = data[1]
       port = int(data[2])
-      first = NodeReference(ip, port)             
+      first = NodeReference(ip, port) 
       data_resp = first.join(self._ip, self._tcp_port).decode().split('|')
-      self._pred = NodeReference(data_resp[0], int(data_resp[1]))
-      self._succ = NodeReference(data_resp[2], int(data_resp[3]))
-    
+      
+      #se la data no esta vacia me ubico 
+      if len(data_resp) != ['']:
+        self._pred = NodeReference(data_resp[0], int(data_resp[1]))
+        self._succ = NodeReference(data_resp[2], int(data_resp[3]))
+      
+      #si la data esta vacia, hubo un error
+      else:
+        self._confirm_join = False
+        self._joined = False
+          
     elif option == UPDATE_PREDECESSOR:
       ip = data[1]
       port = int(data[2])
@@ -559,7 +584,7 @@ class Server:
       s.bind(('', self._udp_port))
       print(f'Socket broadcast binded to {self._udp_port}')
   
-      while(True):
+      while True:
         data_recv = s.recvfrom(1024)
         thread = threading.Thread(target=self._handle_broadcast, args=(data_recv,))
         thread.start()
@@ -571,7 +596,7 @@ class Server:
       s.bind((self._ip, self._udp_port))
       print(f'Socket UDP binded to ({self._ip}, {self._udp_port})')
       
-      while(True):
+      while True:
         data_recv = s.recvfrom(1024)
         client = threading.Thread(target=self._handle_client_udp, args=(data_recv,))
         client.start()
