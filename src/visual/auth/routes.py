@@ -93,12 +93,6 @@ def chat():
   chat_state = server.get(id, f'{name} - {number}')
   form = SendMSG()
   
-  if form.validate_on_submit():
-    msg = form.text.data.strip()
-    server.send_msg(id, name, int(number), msg)
-    server.recv_msg(set_id(f'{name} - {number}'), my_name, int(my_number), msg)
-    return redirect(url_for('auth.homepage', id=id, my_name=my_name, my_number=my_number))
-    
   context = {
     'form': form,
     'id': id,
@@ -107,4 +101,12 @@ def chat():
     'my_name': my_name, 
     'my_number': my_number
     }
+  
+  if form.validate_on_submit():
+    msg = form.text.data.strip()
+    state = server.send_msg(id, name, int(number), msg)
+    server.recv_msg(set_id(f'{name} - {number}'), my_name, int(my_number), msg)
+    context['state'] = state.split('\n')
+    return render_template('chat.html', **context)
+    
   return render_template('chat.html', **context)

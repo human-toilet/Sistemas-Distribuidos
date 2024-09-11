@@ -63,9 +63,10 @@ class DB:
     endpoint = f'{name} - {number}'
     
     with open(f'{user}/{endpoint}.txt', 'a') as f:
-      f.write(f'[YOU]: {msg}\n' if msg.strip() != '' else '')   
+      f.write(f'[You]: {msg}\n' if msg.strip() != '' else '')
       
-    return f'Message sent: {msg}' 
+    with open(f'{user}/{endpoint}.txt', 'r') as f:
+      return f.read()    
   
   #recibir un sms
   @classmethod
