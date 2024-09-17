@@ -425,14 +425,14 @@ class Server:
     elif option == SEND_MSG:
       id = int(data[1])
       name = data[2]
-      number = str(data[3])
+      number = int(data[3])
       msg = data[4]
       data_resp = self._send_msg(id, name, number, msg)
 
     elif option == RECV_MSG:
       id = int(data[1])
       name = data[2]
-      number = str(data[3])
+      number = int(data[3])
       msg = data[4]
       data_resp = self._recv_msg(id, name, number, msg)
 
@@ -538,6 +538,7 @@ class Server:
       if len(data_resp) != ['']:
         self._pred = NodeReference(data_resp[0], int(data_resp[1]))
         self._succ = NodeReference(data_resp[2], int(data_resp[3]))
+        self._joined = True
       
       #si la data esta vacia, hubo un error
       else:
