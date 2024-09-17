@@ -70,7 +70,7 @@ class DB:
   
   #recibir un sms
   @classmethod
-  def recv_msg(cls, id: int, name: str, number: str, msg: str) -> str:
+  def recv_msg(cls, id: int, name: str, number: int, msg: str) -> str:
     user = find_user(id)
     
     if user != None:
