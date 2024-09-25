@@ -16,15 +16,16 @@ UPDATE_SUCC = 'upd_suc'
 DATA_PRED = 'dat_prd'
 FALL_SUCC = 'fal_suc'
 
-BROADCAST_IP = '255.255.255.255' #dirección de broadcast
-UDP_PORT = 8888 #puerto de escucha del socket UDP
+#dirección de broadcast
+BROADCAST_IP = '255.255.255.255' 
 
 #operadores database
 REGISTER = 'reg'
 LOGIN = 'log'
 ADD_CONTACT = 'add_cnt'
-SEND_MSG = 'send'
-RECV_MSG = 'recv'
+ADD_NOTE = 'add_not'
+RECV_MSG = 'rec_msg'
+RECV_NOTE = 'rec_not'
 GET = 'get'
 
 #nodos referentes a otros servidores
@@ -58,23 +59,28 @@ class NodeReference:
     return response
       
   #un usuario agreaga un contacto
-  def add_contact(self, id: int, name: str, number: int) -> bytes:
-    response = self._send_data(ADD_CONTACT, f'{id}|{name}|{number}')
+  def add_contact(self, id: int, name: str) -> bytes:
+    response = self._send_data(ADD_CONTACT, f'{id}|{name}')
     return response
   
-  #un usuario envia un sms
-  def send_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
-    response = self._send_data(SEND_MSG, f'{id}|{name}|{number}|{msg}')
-    return response
-  
-  #un usuario recibe un sms
-  def recv_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
-    response = self._send_data(RECV_MSG, f'{id}|{name}|{number}|{msg}')
+  #una nota recibe un sms
+  def recv_msg(self, id: int, note: str, username: int, msg: str) -> bytes:
+    response = self._send_data(RECV_MSG, f'{id}|{note}|{username}|{msg}')
     return response
   
   #operaaciones get
   def get(self, id: int, endpoint: str) -> bytes:
     response = self._send_data(GET, f'{id}|{endpoint}')
+    return response
+  
+  #agregar una nota
+  def add_note(self, id: int, title: str) -> bytes:
+    response = self._send_data(ADD_NOTE, f'{id}|{title}') 
+    return response
+  
+  #compartir una nota
+  def recv_note(self, id: int, name: str, note: str) -> bytes:
+    response = self._send_data(RECV_NOTE, f'{id}|{name}|{note}')
     return response
   ############################################################################################
   
@@ -108,13 +114,16 @@ class NodeReference:
     return self._port
   
 #enviar mensajes por broadcast a la red
-class BroadcastRef:
+class BroadcastRef: 
+  def __init__(self, port: int):
+    self._port = port
+     
   #enviar data
   def _send_data(self, op: str, data=None) -> bytes:
     try:
       with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        s.sendto(f'{op}|{data}'.encode('utf-8'), (BROADCAST_IP, UDP_PORT))
+        s.sendto(f'{op}|{data}'.encode('utf-8'), (BROADCAST_IP, self._port))
     
     except Exception as e:
       print(f"Error sending data: {e}")
@@ -133,8 +142,8 @@ class BroadcastRef:
     self._send_data(NOTIFY, id)
     
   #decirle a los nodos que actualicen su finger table debido a la caida de un nodo
-  def update_finger(self, id: int, ip: str, port: int):
-    self._send_data(UPDATE_FINGER, f'{id}|{ip}|{port}')
+  def update_finger(self, id: int):
+    self._send_data(UPDATE_FINGER, id)
     
 #enviar data a los servidores udp
 def send_data(op: str, ip: str, port: int, data=None):
