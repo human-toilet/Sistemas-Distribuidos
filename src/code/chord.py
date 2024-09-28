@@ -167,7 +167,7 @@ class Server:
             s.connect((self._pred.ip, self._pred.port)) #nos conectamos x via TCP al predecesor
             s.settimeout(5) #configuramos el socket para lanzar un error si no recibe respuesta en 5 segundos
             s.sendall(CHECK_PREDECESOR.encode('utf-8')) #chequeamos que no se ha caido el predecesor
-            self._pred_info = s.recv(1024).decode() #guardamos la info enviada
+            self._pred_info = s.recv(1024).decode() #guardamos la info recibida
             ip_pred_pred = self._pred_info.split('|')[-1] #guardamos el id del predecesor de nuestro predecesor
 
         except:
