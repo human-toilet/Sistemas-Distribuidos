@@ -65,8 +65,7 @@ class DB:
     with open(f'{user}/{endpoint}.txt', 'a') as f:
       f.write(f'[You]: {msg}\n' if msg.strip() != '' else '')
       
-    with open(f'{user}/{endpoint}.txt', 'r') as f:
-      return f.read()    
+    return f'Message sent by {name}: {msg}'    
   
   #recibir un sms
   @classmethod
@@ -80,7 +79,7 @@ class DB:
       with open(f'{user}/{endpoint}.txt', 'a') as f:
         f.write(f'[{name}]: {msg}\n')   
 
-      return f'Message recivied: {msg}'
+      return f'Message recivied from {name}: {msg}'
     
     return 'User not registred'
   
