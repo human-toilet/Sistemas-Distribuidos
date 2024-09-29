@@ -1,9 +1,8 @@
 #dependencias
-from src.code.db import DB
+from src.code.db import DataBase, DB
 from src.code.comunication import NodeReference, BroadcastRef, send_data
-from src.code.comunication import REGISTER, LOGIN, ADD_CONTACT, SEND_MSG, RECV_MSG, GET
+from src.code.comunication import REGISTER, LOGIN, ADD_CONTACT, RECV_MSG, GET, ADD_NOTE, RECV_NOTE
 from src.code.comunication import JOIN, CONFIRM_FIRST, FIX_FINGER, FIND_FIRST, REQUEST_DATA, CHECK_PREDECESOR, NOTIFY, UPDATE_PREDECESSOR, UPDATE_FINGER, UPDATE_SUCC, DATA_PRED, FALL_SUCC
-from src.code.db import DIR
 from src.code.handle_data import HandleData
 from src.utils import set_id, get_ip, create_folder
 import queue
@@ -22,7 +21,7 @@ class Server:
     self._tcp_port = TCP_PORT #puerto del socket tp
     self._udp_port = UDP_PORT #puerto del socket udp
     self._ref = NodeReference(self._ip, self._tcp_port) #referencia a mi mismo para la finger table
-    self._broadcast = BroadcastRef() #comunicacion por broadcast
+    self._broadcast = BroadcastRef(self._udp_port) #comunicacion por broadcast
     self._handler = HandleData(self._id) #manejar la data de la db
     self._succ = self._ref #inicialmente soy mi sucesor
     self._pred = None #inicialmente no tengo predecessor
@@ -48,7 +47,7 @@ class Server:
     threading.Thread(target=self._handle_update_finger).start()
     
     #crear la carpeta de la base de datos
-    create_folder(f'{DIR}/db')
+    create_folder(DB)
     
     while True:
       self._broadcast.join() 
@@ -168,7 +167,7 @@ class Server:
             s.connect((self._pred.ip, self._pred.port)) #nos conectamos x via TCP al predecesor
             s.settimeout(5) #configuramos el socket para lanzar un error si no recibe respuesta en 5 segundos
             s.sendall(CHECK_PREDECESOR.encode('utf-8')) #chequeamos que no se ha caido el predecesor
-            self._pred_info = s.recv(1024).decode() #guardamos la info enviada
+            self._pred_info = s.recv(1024).decode() #guardamos la info recibida
             ip_pred_pred = self._pred_info.split('|')[-1] #guardamos el id del predecesor de nuestro predecesor
 
         except:
@@ -243,7 +242,7 @@ class Server:
         self._update_finger_queue.task_done()
   ############################################################################################ 
   
-  ############################## INTERACCIONES CON LA DB #####################################
+  ############################## INTERACCIONES CON LA DataBase #####################################
   #registrar un usuario
   def register(self, id: int, name: str, number: int) -> str:
     #si el dato tiene menor id que nosotros, le pedimos al "first" que haga la operacion
@@ -261,7 +260,7 @@ class Server:
   def _register(self, id: int, name: str, number: int) -> bytes:
     #si el dato tiene menor id que nosotros o tiene mayor id pero somos el "lider", nos encargamos de el
     if (id < self._id) or (id > self._id and self._leader):
-      response = DB.register(name, number)
+      response = DataBase.register(name, number)
       print(response)
       return response.encode()
     
@@ -285,7 +284,7 @@ class Server:
   def _login(self, id: int, name: str, number: int) -> bytes:
     #si el dato tiene menor id que nosotros o tiene mayor id pero somos el "lider", nos encargamos de el
     if (id < self._id) or (id > self._id and self._leader):
-      response = DB.login(name, number)
+      response = DataBase.login(name, number)
       print(response)
       return response.encode()
 
@@ -294,76 +293,51 @@ class Server:
     return response
   
   #un usuario agreaga un contacto
-  def add_contact(self, id: int, name: str, number: int) -> str:
+  def add_contact(self, id: int, name: str) -> str:
     #si el dato tiene menor id que nosotros, le pedimos al "first" que haga la operacion
     if id < self._id and not self._first:
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
       port = int(data_first[1])
       first = NodeReference(ip, port)
-      return first.add_contact(id, name, number).decode()
+      return first.add_contact(id, name).decode()
     
     else:
-      return self._add_contact(id, name, number).decode()
+      return self._add_contact(id, name).decode()
   
   #un usuario agreaga un contacto
-  def _add_contact(self, id: int, name: str, number: int) -> bytes:
+  def _add_contact(self, id: int, name: str) -> bytes:
     #si el dato tiene menor id que nosotros o tiene mayor id pero somos el "lider", nos encargamos de el
     if (id < self._id) or (id > self._id and self._leader):
-      response = DB.add_contact(id, name, number)
+      response = DataBase.add_contact(id, name)
       print(response)
       return response.encode()
 
-    response = self._closest_preceding_finger(id).add_contact(id, name, number)
+    response = self._closest_preceding_finger(id).add_contact(id, name)
     return response
   
-  #un usuario envia un sms
-  def send_msg(self, id: int, name: str, number: int, msg: str) -> str:
-    #si el dato tiene menor id que nosotros, le pedimos al "first" que haga la operacion
-    if id < self._id and not self._first:
+  #una nota recibe un sms
+  def recv_msg(self, id: int, note: str, username: str, msg: str) -> str:
+    #si el dato tiene menor id que nosotros o tiene mayor id pero somos el "lider", nos encargamos de el
+    if (id < self._id) or (id > self._id and self._leader):
       data_first = self._find_first().decode().split('|')
       ip = data_first[0]
       port = int(data_first[1])
       first = NodeReference(ip, port)
-      return first.send_msg(id, name, number, msg).decode()
+      return first.recv_msg(id, note, username, msg).decode()
     
     else:
-      return self._send_msg(id, name, number, msg).decode()
+      return self._recv_msg(id, note, username, msg).decode()
   
-  #un usuario envia un sms
-  def _send_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
-    #si el dato tiene menor id que nosotros o tiene mayor id pero somos el "lider", nos encargamos de el
-    if (id < self._id) or (id > self._id and self._leader):
-      response = DB.send_msg(id, name, number, msg)
-      print(response)
-      return response.encode()
-    
-    response = self._closest_preceding_finger(id).send_msg(id, name, number, msg)
-    print(response)
-    return response
-  
-  #un usuario recibe un sms
-  def recv_msg(self, id: int, name: str, number: int, msg: str) -> str:
+  #una nota recibe un sms
+  def _recv_msg(self, id: int, note: str, username: str, msg: str) -> bytes:
     #si el dato tiene menor id que nosotros, le pedimos al "first" que haga la operacion
-    if id < self._id and not self._first:
-      data_first = self._find_first().decode().split('|')
-      ip = data_first[0]
-      port = int(data_first[1])
-      first = NodeReference(ip, port)
-      return first.recv_msg(id, name, number, msg).decode()
-    
-    else:
-      return self._recv_msg(id, name, number, msg).decode()
-  
-  #un usuario recibe un sms
-  def _recv_msg(self, id: int, name: str, number: int, msg: str) -> bytes:
-    #si el dato tiene menor id que nosotros o tiene mayor id pero somos el "lider", nos encargamos de el
     if (id < self._id) or (id > self._id and self._leader):
-      response = DB.recv_msg(id, name, number, msg)
+      response = DataBase.recv_msg(id, note, username, msg)
       print(response)
       return response.encode()
     
-    response = self._closest_preceding_finger(id).recv_msg(id, name, number, msg)
+    response = self._closest_preceding_finger(id).recv_msg(id, note, username, msg)
     print(response)
     return response
   
@@ -384,11 +358,61 @@ class Server:
   def _get(self, id: int, endpoint: str) -> bytes:
     #si el dato tiene menor id que nosotros o tiene mayor id pero somos el "lider", nos encargamos de el
     if (id < self._id) or (id > self._id and self._leader):
-      response = DB.get(id, endpoint)
+      response = DataBase.get(id, endpoint)
       print(response)
       return response.encode()
     
     response = self._closest_preceding_finger(id).get(id, endpoint)
+    print(response)
+    return response
+  
+  #agregar una nota
+  def add_note(self, id: int, title: str) -> str:
+    #si el dato tiene menor id que nosotros, le pedimos al "first" que haga la operacion
+    if id < self._id and not self._first:
+      data_first = self._find_first().decode().split('|')
+      ip = data_first[0]
+      port = int(data_first[1])
+      first = NodeReference(ip, port)
+      return first.add_note(id, title).decode()
+    
+    else:
+      return self._add_note(id, title).decode()
+  
+  #agregar una nota
+  def _add_note(self, id: int, title: str) -> bytes:
+    #si el dato tiene menor id que nosotros o tiene mayor id pero somos el "lider", nos encargamos de el
+    if (id < self._id) or (id > self._id and self._leader):
+     response = DataBase.add_note(id, title)
+     print(response)
+     return response.encode()
+    
+    response = self._closest_preceding_finger(id).add_note(id, title)
+    print(response)
+    return response
+  
+  #compartir una nota
+  def recv_note(self, id: int, name: str, note: str) -> str:
+    #si el dato tiene menor id que nosotros, le pedimos al "first" que haga la operacion
+    if id < self._id and not self._first:
+      data_first = self._find_first().decode().split('|')
+      ip = data_first[0]
+      port = int(data_first[1])
+      first = NodeReference(ip, port)
+      return first.recv_note(id, name, note).decode()
+    
+    else:
+      return self._recv_note(id, name, note).decode()
+    
+  #compartir una nota
+  def _recv_note(self, id: int, name: str, note: str) -> bytes:
+    #si el dato tiene menor id que nosotros, le pedimos al "first" que haga la operacion
+    if (id < self._id) or (id > self._id and self._leader):
+      response = DataBase.recv_note(id, name, note)
+      print(response)
+      return response.encode()
+    
+    response = self._closest_preceding_finger(id).recv_note(id, name, note)
     print(response)
     return response
   ############################################################################################
@@ -419,28 +443,31 @@ class Server:
     elif option == ADD_CONTACT:
       id = int(data[1])
       name = data[2]
-      number = str(data[3])
-      data_resp = self._add_contact(id, name, number)
-
-    elif option == SEND_MSG:
-      id = int(data[1])
-      name = data[2]
-      number = int(data[3])
-      msg = data[4]
-      data_resp = self._send_msg(id, name, number, msg)
+      data_resp = self._add_contact(id, name)
 
     elif option == RECV_MSG:
       id = int(data[1])
-      name = data[2]
-      number = int(data[3])
+      note = data[2]
+      username = data[3]
       msg = data[4]
-      data_resp = self._recv_msg(id, name, number, msg)
+      data_resp = self._recv_msg(id, note, username, msg)
 
     elif option == GET:
       id = int(data[1])
       endpoint = data[2]
       data_resp = self._get(id, endpoint)
 
+    elif option == ADD_NOTE:
+      id = int(data[1])
+      title = data[2]
+      data_resp = self._add_note(id, title)
+          
+    elif option == RECV_NOTE:
+      id = int(data[1])
+      name = data[2]
+      title = data[3]
+      data_resp = self._recv_note(id, name, title)
+      
     elif option == JOIN:
       ip = data[1]
       port = int(data[2])

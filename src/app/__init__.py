@@ -1,7 +1,7 @@
 #dependencias
 from flask import Flask
-from src.visual.config import SECRET_KEY
-from src.visual.auth import auth
+from src.app.config import SECRET_KEY
+from src.app.auth import auth
 
 #inicializar la app
 def create_app():

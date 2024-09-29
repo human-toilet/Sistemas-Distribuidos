@@ -98,12 +98,9 @@ body{
   background-color: black;
 }
 
-.back_button
-{
+.button{
   position: absolute;
   color: blueviolet;
-  margin: 5px 10px;
-  padding: 5px;
   font-weight: bold;
   font-size: 20px;
   border: 1px solid black;
@@ -111,9 +108,16 @@ body{
   cursor: pointer;
   user-select: none;
   background-color: white;
+  padding: 5px;
+  margin: 5px 10px;
 }
 
-.back_button:hover{
+.share_button{
+  left: 90%;
+}
+
+.button:hover{
   background-color: black;
   color: peru;
 }
+

@@ -17,14 +17,14 @@ body{
   user-select: none;
 }
 
-.principal_content_contacts{
+.principal_content_notes{
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
   height: 75%;
 }
 
-.container_contacts{
+.container_notes{
   height: 100%;
   background-color: white;
   width: 70%;
@@ -36,7 +36,7 @@ body{
   border-radius: 25px;
 }
 
-.contacts_head{
+.notes_head{
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +79,14 @@ body{
   color: peru;
 }
 
-.button_contact{
+.buttons_homepage{
+  width: 85%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.button_foot{
   background-color: blueviolet;
   color: white;
   text-decoration: none;
@@ -89,19 +96,18 @@ body{
   justify-content: center;
   margin: 10px;
   width: 20%;
-  height: 10%;
+  height: 63%;
   border-radius: 25px;
   border: 1px solid black;
   cursor: pointer;
 }
 
-.button_contact:hover{
+.button_foot:hover{
   background-color: black;
   color: peru;
 }
 
-.back_button
-{
+.back_button{
   position: absolute;
   color: blueviolet;
   margin: 5px 10px;
