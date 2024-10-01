@@ -1,5 +1,5 @@
 #dependencias
-from src.code.db import DB
+from src.code.db import DIR
 from src.utils import rem_dir, set_id, create_folder
 import os
 
@@ -13,37 +13,36 @@ class HandleData():
   def data(self, delete: bool, id=None) -> str:
     result = ''
     
-    for user in os.listdir(DB):
+    for user in os.listdir(f'{DIR}/db'):
       if id == None or (id < self._id and set_id(user) < id) or (id > self._id and set_id(user) > self._id):
         result += f'{user}'
         
-        for file in os.listdir(f'{DB}/{user}'):
-          with open(f'{DB}/{user}/{file}', 'r') as f:
+        for file in os.listdir(f'{DIR}/db/{user}'):
+          with open(f'{DIR}/db/{user}/{file}', 'r') as f:
             result += f'/{file}/{f.read()}'
   
         result += '|'
-        self._garbage.append(f'{DB}/{user}')
-      
+        self._garbage.append(f'{DIR}/db/{user}')
+
     self._clean(delete)
     return result
   
   #crear data en la db
-  @classmethod
-  def create(cls, data: str):
-    users = data.split('|')
+  def create(self, data: str):
+    users = data.split('|')[:-1]
     
     for user in users:
-      if user != '':
+      if user != '' or '/' in users:
         parse = user.split('/')
-        create_folder(f'{DB}/{parse[0]}')
-        info = parse[1:]
+        create_folder(f'{DIR}/db/{parse[0]}')
+        chats = parse[1:]
         
-        for i in range(len(info)):
+        for i in range(len(chats)):
           if i % 2 != 0:
             continue
           
-          with open(f'{DB}/{parse[0]}/{info[i]}', 'w') as f:
-            f.write(info[i + 1])
+          with open(f'{DIR}/db/{parse[0]}/{chats[i]}', 'w') as f:
+            f.write(chats[i + 1])
   
   #eliminar data de la db almacenada en el garbage y reiniciar el garbage
   def _clean(self, delete: bool):

@@ -2,121 +2,86 @@
 from src.utils import set_id
 import os
 
-#direccion de la base de datos
-DB = f'{os.path.dirname(os.path.abspath(__file__))}/db'
+#direccion de donde estoy
+DIR = os.path.dirname(os.path.abspath(__file__))
 
 #encontrar un usuario segun su id
 def find_user(id: int) -> str:
-  for user in os.listdir(f'{DB}'):
+  for user in os.listdir(f'{DIR}/db'):
     if set_id(user) == id:
-      return f'{DB}/{user}'
+      return f'{DIR}/db/{user}'
 
 #objeto para encapsular la interaccion del usuario con la db
-class DataBase:
+class DB:
   #registrar un usuario en la db
   @classmethod
   def register(cls, name: str, number: int) -> str:
     #verificar si esta en la db
-    if os.path.exists(f'{DB}/{name}'):
-      return 'Username already in use'
-    
+    if os.path.exists(f'{DIR}/db/{name} - {number}'):
+      return 'User already exists'
+      
     #agregar al nuevo usuario
-    os.mkdir(f'{DB}/{name}')
+    os.mkdir(f'{DIR}/db/{name} - {number}')
     
-    with open(f'{DB}/{name}/number.txt', 'w') as f:
-     f.write(str(number))
-    
-    with open(f'{DB}/{name}/contacts.txt', 'w') as f:
+    with open(f'{DIR}/db/{name} - {number}/contacts.txt', 'w') as f:
       f.write('')
       
-    with open(f'{DB}/{name}/notes.txt', 'w') as f:
-      f.write('')
-      
-    return 'Succesful registration'
+    return f'Succesfully registrated user: {name}'
     
   #logear un usuario
   @classmethod
   def login(cls, name: str, number: int) -> str:
     #verificar si esta en la db
-    if os.path.exists(f'{DB}/{name}'):
-      with open(f'{DB}/{name}/number.txt', 'r') as f:
-        if str(number) in f.read(): 
-          return 'Succesfully login'
-        
+    if os.path.exists(f'{DIR}/db/{name} - {number}'):
+      return f'Succesful login user: {name}'
+    
     return 'User not registred'
 
   #agregar un contacto
   @classmethod
-  def add_contact(cls, id: int, name: str) -> str:
+  def add_contact(cls, id: int, name: str, number: int) -> str:
     #referenciar el usuario segun el id
     user = find_user(id)
       
     #validar si el contacto ya existe
     with open(f'{user}/contacts.txt', 'r') as f:
-      if str(name) in f.read():
+      if f'{name} - {number}\n' in f.readlines():
         return 'Contact already exists'
       
     with open(f'{user}/contacts.txt', 'a') as f:
-      f.write(f'{name}\n')
-    
-    return f'Succesfully add contact: {name}'
-   
-  #agregar una nota
-  @classmethod 
-  def add_note(cls, id: int, name: str) -> str:
-    #referenciar el usuario segun el id
-    user = find_user(id)
-    endpoint = user.split('/')[-1]
+      f.write(f'{name} - {number}\n')
       
-<<<<<<< HEAD
-    return f'Message sent by {name}: {msg}'    
-=======
-    #validar si la nota ya existe
-    with open(f'{user}/notes.txt', 'r') as f:
-      if f'{name} - {endpoint}' in f.read():
-        return 'Note already exists'
-      
-    with open(f'{user}/notes.txt', 'a') as f:
-      f.write(f'{name} - {endpoint}\n')
-    
-    with open(f'{user}/{name} - {endpoint}.txt', 'w') as f:
+    with open(f'{user}/{name} - {number}.txt', 'w') as f:
       f.write('')
-      
-    return f'Created new note: {name}'
->>>>>>> 17747edf575f504baeae8f9bbc1b03814b37d361
-  
-  #compartir una nota
+    
+    return f'Succesfully added contact: {name} - {number}'
+   
+  #enviar un sms   
   @classmethod
-  def recv_note(cls, id: int, name: str, note: str) -> str:
-    #referenciar el usuario segun el id
+  def send_msg(cls, id: int, name: str, number: int, msg: str) -> str:
+    user = find_user(id)
+    endpoint = f'{name} - {number}'
+    
+    with open(f'{user}/{endpoint}.txt', 'a') as f:
+      f.write(f'[You]: {msg}\n' if msg.strip() != '' else '')
+      
+    return f'Message sent by {name}: {msg}'    
+  
+  #recibir un sms
+  @classmethod
+  def recv_msg(cls, id: int, name: str, number: int, msg: str) -> str:
     user = find_user(id)
     
     if user != None:
-      #validar si la nota ya fue compartida
-      with open(f'{user}/notes.txt', 'r') as f:
-        if f'{note} - {name}' in f.readlines():
-          return 'Note already shared'
+      cls.add_contact(id, name, number)
+      endpoint = f'{name} - {number}'
+    
+      with open(f'{user}/{endpoint}.txt', 'a') as f:
+        f.write(f'[{name}]: {msg}\n')   
 
-<<<<<<< HEAD
       return f'Message recivied from {name}: {msg}'
-=======
-      with open(f'{user}/notes.txt', 'a') as f:
-        f.write(f'{note} - {name}\n')
-        return f"Succesfully shared note: {note}"
->>>>>>> 17747edf575f504baeae8f9bbc1b03814b37d361
     
     return 'User not registred'
-    
-  #recibir un sms
-  @classmethod
-  def recv_msg(cls, id: int, note: str, name: str, msg: str) -> str:
-    user = find_user(id)
-    
-    with open(f'{user}/{note}.txt', 'a') as f:
-      f.write(f'[{name}]: {msg}\n')   
-      
-    with open(f'{user}/{note}.txt', 'r') as f:
-      return f.read()
   
   #get 
   @classmethod
@@ -126,4 +91,3 @@ class DataBase:
     
     with open(f'{user}/{endpoint}.txt', 'r') as f:
       return f.read().strip()
-      
