@@ -556,8 +556,7 @@ class Server:
       self._succ = NodeReference(ip, port)
       
     elif option == DATA_PRED:
-      data = data[1]
-      self._pred_pred = data
+      self._pred_pred = data_recv[0].decode()[8:]
       
     elif option == FIX_FINGER:
       self._fix_finger_queue.put((addr[0], TCP_PORT))
